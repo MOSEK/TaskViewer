@@ -34,16 +34,23 @@ function TarFile_readentry()
     {
         for (var i = 1; i < 12; ++i)
         {
-            size = size * 256 + sizebuf[i];
+            size = (size << 8) + sizebuf[i];
         }
     }
     else // octal - never happens
     {
+        for (var i = 0; i < 11; ++i)
+        {
+            size = (size << 3) + (sizebuf[i]-48);
+        }
     }
     this.curentry_size = size;
-    var roundsize = size; 
+    var roundsize = size+512; 
     if (size % 512 != 0) roundsize += (512-size%512);
-    this.next_pos = this.pos+512+roundsize;
+    this.next_pos = this.pos+roundsize;
+
+    //console.log("pos",this.pos,sizebuf)
+    //console.log("filename",filename,size,roundsize);
 
     this.curentry_data = new DataView(this.data,this.pos+512,size);
 }

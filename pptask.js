@@ -77,7 +77,6 @@ function pptask(data,element)
     var objstr = new Array(tf.numvar+tf.numbarvar+1);
     if (tf.c != null)
     {
-        console.log()
         for (var i = 0; i < tf.c.length; ++i) 
             objstr[i] = fmtlinelm(tf.c[i],tf.varnames[i]);
     }
@@ -95,40 +94,6 @@ function pptask(data,element)
                                               tf.barvarnames[sub]);
         }
     }
-/*
-    for (var k = 0; k < tf.barcsparsity.length; ++k)
-    {
-        var sub = tf.barcsparsity[k];
-        var pb  = tf.barcalpha.ptrb[k];
-        var pe  = tf.barcalpha.ptrb[k+1];
-
-        if (pe-pb == 1)
-        {
-            var cof = tf.barcalpha.valij[pb];
-            if (cof > 0)
-            {
-                if (pb > 1 || pb < 1)
-                    objstr[sub+tf.numvar] = " + "+cof+" M#"+tf.barcalpha.subj[pb]+" "+varname(tf.barvarnames[sub]);
-                else
-                    objstr[sub+tf.numvar] = " + M#"+tf.barcalpha.subj[pb]+" "+varname(tf.barvarnames[sub]);
-            }
-            else if (cof < 0)
-            {
-                if (pb > 1 || pb < 1)
-                    objstr[sub+tf.numvar] = " - "+(-cof)+" M#"+tf.barcalpha.subj[pb]+" "+varname(tf.barvarnames[sub]);
-                else
-                    objstr[sub+tf.numvar] = " - M#"+tf.barcalpha.subj[pb]+" "+varname(tf.barvarnames[sub]);
-            }
-        }
-        else if (pe-pb > 1)
-        {
-        }
-    }
-*/
-
-
-
-
 
 
 
@@ -147,15 +112,15 @@ function pptask(data,element)
             baraptrb[tf.barasparsity.subi[i]+1] += baraptrb[tf.barasparsity.subi[i]];
     }
 
-    console.log("A");
-    console.log(tf.A);
+    //console.log("A");
+    //console.log(tf.A);
 
     for (var i = 0; i < tf.numcon; ++i)
     {
         var conarr = new Array();
         conarr[0]  = "<tr><td><span  class=\"con-name\">"+tf.connames[i]+"</span></td>";
         var bk = tf.conbk[i];
-        console.log("bk = "+bk+ ", bound = "+tf.conbound[i]+", "+tf.conbound[i+tf.numcon]);
+        //console.log("bk = "+bk+ ", bound = "+tf.conbound[i]+", "+tf.conbound[i+tf.numcon]);
         if (bk == MSK_BK_LO ||
             bk == MSK_BK_RA )
         {
@@ -170,14 +135,14 @@ function pptask(data,element)
 
         var conexpr = new Array(tf.numvar+tf.numbarvar);
 
-        console.log(tf.A.valij);
-        console.log("range : "+tf.A.ptrb[i]+" - " +tf.A.ptrb[i+1]);
+        //console.log(tf.A.valij);
+        //console.log("range : "+tf.A.ptrb[i]+" - " +tf.A.ptrb[i+1]);
         for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
         {
             var sub = tf.A.subj[k];
             conexpr[sub] = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
         }
-        console.log("k : "+k);
+        //console.log("k : "+k);
         
 
         if (tf.barasparsity != null)
@@ -225,9 +190,9 @@ function pptask(data,element)
         else if (tf.varbk[i] == MSK_BK_UP)
             ppdata[ppdata.length] = "<tr><td /><td colspan=10> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
         else if (tf.varbk[i] == MSK_BK_LO)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.barbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin; </td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin; </td></tr>";
         else if (tf.varbk[i] == MSK_BK_RA)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.barbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
     }
     for (var i = 0; i < tf.numbarvar; ++i)
     {
@@ -278,6 +243,4 @@ function pptask(data,element)
         rows[rows.length] = "</table>";
         element.innerHTML += rows.join("\n");
     }
-
-    
 }

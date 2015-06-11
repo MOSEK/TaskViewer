@@ -12,6 +12,12 @@
       /*.problem-table td { border : solid thin black; }*/
       .var-name { color : blue; }
       .con-name { color : #808080; }
+
+      .problem-table tr:nth-child(2n+1) {background-color : #e0e0ff; }
+
+      .problem-table { cell-spacing : 0px; border-collapse : collapse; }
+      .problem-table td {  padding : 0 3ps 0 3px; margin : 0px; }
+      .problem-table td { white-space : nowrap; }
     </style>
 
     <script>
@@ -35,7 +41,7 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
 
   <body>
     <input type="file" name="Task File" id="file-input" accept=".task" autofocus/>
-    <div id="pretty-task">      
+    <div id="pretty-task">
     </div>
   </body>
 </html>

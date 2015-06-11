@@ -57,7 +57,6 @@ function pptask(data,element)
     element.innerHTML = "";
     element.innerHTML += ("<h1>Summary</h1>\n"+
                           "<table class=\"info-table\">\n"+
-                          "  <tbody>\n"+
                           "  <tr><td>File written by Mosek version</td>  <td>"+tf.mosekver+"</td></tr>\n"+
                           "  <tr><td>Task Name</td>           <td>"+(tf.taskname.length > 0 ? tf.taskname : "<anonymous>")+"</td></tr>\n"+
                           "  <tr><td>Variables</td>           <td>"+tf.numvar+"</td></tr>\n"+
@@ -67,17 +66,17 @@ function pptask(data,element)
                           "  <tr><td>A non-zeros</td>         <td>"+tf.numanz+"</td></tr>\n"+
                           "  <tr><td>Q non-zeros</td>         <td>"+tf.numqnz+"</td></tr>\n"+
                           "  <tr><td>Symmetric Matrixes</td>  <td>"+tf.numsymmat+"</td></tr>\n"+
-                          "  </tbody>\n"+
                           "</table>\n")
     element.innerHTML += "<h1>Problem</h1>\n";
 
     var ppdata = new Array();
-    ppdata[0] = "<table class=\"problem-table\">"
-    
+
+    ppdata[0] = "<table class=\"problem-table\" style=\"border : solid thin black; \">"
+
     var objstr = new Array(tf.numvar+tf.numbarvar+1);
     if (tf.c != null)
     {
-        for (var i = 0; i < tf.c.length; ++i) 
+        for (var i = 0; i < tf.c.length; ++i)
             objstr[i] = fmtlinelm(tf.c[i],tf.varnames[i]);
     }
     if (tf.barcsparsity != null)
@@ -87,14 +86,13 @@ function pptask(data,element)
             var sub = tf.barcsparsity[k];
             var pb  = tf.barcalpha.ptrb[k];
             var pe  = tf.barcalpha.ptrb[k+1];
-            
+
             objstr[sub+tf.numvar] = fmtbarelm(tf.barcalpha.valij,
                                               tf.barcalpha.subj,
-                                              pb,pe, 
+                                              pb,pe,
                                               tf.barvarnames[sub]);
         }
     }
-
 
 
 
@@ -118,7 +116,7 @@ function pptask(data,element)
     for (var i = 0; i < tf.numcon; ++i)
     {
         var conarr = new Array();
-        conarr[0]  = "<tr><td><span  class=\"con-name\">"+tf.connames[i]+"</span></td>";
+        conarr[0]  = "<td><span  class=\"con-name\">"+tf.connames[i]+"</span></td>";
         var bk = tf.conbk[i];
         //console.log("bk = "+bk+ ", bound = "+tf.conbound[i]+", "+tf.conbound[i+tf.numcon]);
         if (bk == MSK_BK_LO ||
@@ -175,10 +173,15 @@ function pptask(data,element)
         {
             conarr[conarr.length] = "<td class=\"con-ub\"></td>"
         }
-        conarr[conarr.length] = "</tr>\n";
-        ppdata[ppdata.length] = conarr.join("");
+        ppdata[ppdata.length] = "<tr class=\""+(ppdata.length % 2 == 0 ? "even" : "odd")+"\">"+conarr.join("")+"</tr>";
     }
+    ppdata[ppdata.length] = "</table>";
 
+    element.innerHTML += ppdata.join("\n")+"\n";
+
+
+    ppdata = new Array();
+    ppdata[0] = "<table class\"variables-table\">"
 
     ppdata[ppdata.length] = "<tr><td>With variables</td></tr>";
     for (var i = 0; i < tf.numvar; ++i)

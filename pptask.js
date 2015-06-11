@@ -81,16 +81,19 @@ function pptask(data,element)
         for (var i = 0; i < tf.c.length; ++i) 
             objstr[i] = fmtlinelm(tf.c[i],tf.varnames[i]);
     }
-    for (var k = 0; k < tf.barcsparsity.length; ++k)
+    if (tf.barcsparsity != null)
     {
-        var sub = tf.barcsparsity[k];
-        var pb  = tf.barcalpha.ptrb[k];
-        var pe  = tf.barcalpha.ptrb[k+1];
-
-        objstr[sub+tf.numvar] = fmtbarelm(tf.barcalpha.valij,
-                                          tf.barcalpha.subj,
-                                          pb,pe, 
-                                          tf.barvarnames[sub]);
+        for (var k = 0; k < tf.barcsparsity.length; ++k)
+        {
+            var sub = tf.barcsparsity[k];
+            var pb  = tf.barcalpha.ptrb[k];
+            var pe  = tf.barcalpha.ptrb[k+1];
+            
+            objstr[sub+tf.numvar] = fmtbarelm(tf.barcalpha.valij,
+                                              tf.barcalpha.subj,
+                                              pb,pe, 
+                                              tf.barvarnames[sub]);
+        }
     }
 /*
     for (var k = 0; k < tf.barcsparsity.length; ++k)
@@ -135,13 +138,17 @@ function pptask(data,element)
     ppdata[ppdata.length] = "<tr><td>Such that</td></td>"
 
 
-    var baraptrb = new Int32Array(tf.numcon+1);
-    for (var i = 0; i < tf.barasparsity.nnz; ++i)
-        ++baraptrb[tf.barasparsity.subi[i]+1];
-    for (var i = 0; i < tf.barasparsity.nnz; ++i)
-        baraptrb[tf.barasparsity.subi[i]+1] += baraptrb[tf.barasparsity.subi[i]];
-    console.log("baraalpha:");
-    console.log(tf.baraalpha);
+    if (tf.barasparsity != null)
+    {
+        var baraptrb = new Int32Array(tf.numcon+1);
+        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+            ++baraptrb[tf.barasparsity.subi[i]+1];
+        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+            baraptrb[tf.barasparsity.subi[i]+1] += baraptrb[tf.barasparsity.subi[i]];
+    }
+
+    console.log("A");
+    console.log(tf.A);
 
     for (var i = 0; i < tf.numcon; ++i)
     {
@@ -164,22 +171,28 @@ function pptask(data,element)
         var conexpr = new Array(tf.numvar+tf.numbarvar);
 
         console.log(tf.A.valij);
+        console.log("range : "+tf.A.ptrb[i]+" - " +tf.A.ptrb[i+1]);
         for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
         {
-            var sub = tf.A.subi[k];
+            var sub = tf.A.subj[k];
             conexpr[sub] = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
         }
+        console.log("k : "+k);
+        
 
-        for (var k = baraptrb[i]; k < baraptrb[i+1]; ++k)
+        if (tf.barasparsity != null)
         {
-            var sub = tf.barasparsity.subj[k];
-            var pb  = tf.baraalpha.ptrb[k];
-            var pe  = tf.baraalpha.ptrb[k+1];
-
-            conexpr[tf.numvar+sub] = fmtbarelm(tf.baraalpha.valij,
-                                              tf.baraalpha.subj,
-                                              pb,pe,
-                                              tf.barvarnames[sub]);
+            for (var k = baraptrb[i]; k < baraptrb[i+1]; ++k)
+            {
+                var sub = tf.barasparsity.subj[k];
+                var pb  = tf.baraalpha.ptrb[k];
+                var pe  = tf.baraalpha.ptrb[k+1];
+                
+                conexpr[tf.numvar+sub] = fmtbarelm(tf.baraalpha.valij,
+                                                   tf.baraalpha.subj,
+                                                   pb,pe,
+                                                   tf.barvarnames[sub]);
+            }
         }
 
         conarr[conarr.length] = conexpr.join("</td><td>");
@@ -226,6 +239,45 @@ function pptask(data,element)
     element.innerHTML += ppdata.join("\n")+"\n";
 
     element.innerHTML += "<h1>Solver parameters</h1>\n";
+    if (tf.integerparameters != null)
+    {
+        element.innerHTML += "<h2>Integer parameters</h2>\n";
+        var rows = new Array();
+        rows[0] = "<table class=\"parameter-table\">";
+        for (var i in tf.integerparameters)
+        {
+            var item = tf.integerparameters[i];
+            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>"+item[1]+"</td><tr>";
+        }
+        rows[rows.length] = "</table>";
+        element.innerHTML += rows.join("\n");
+    }
+    if (tf.doubleparameters != null)
+    {
+        element.innerHTML += "<h2>Double parameters</h2>\n";
+        var rows = new Array();
+        rows[0] = "<table class=\"parameter-table\">";
+        for (var i in tf.doubleparameters)
+        {
+            var item = tf.doubleparameters[i];
+            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>"+item[1]+"</td><tr>";
+        }
+        rows[rows.length] = "</table>";
+        element.innerHTML += rows.join("\n");
+    }
+    if (tf.stringparameters != null)
+    {
+        element.innerHTML += "<h2>String parameters</h2>\n";
+        var rows = new Array();
+        rows[0] = "<table class=\"parameter-table\">";
+        for (var i in tf.stringparameters)
+        {
+            var item = tf.stringparameters[i];
+            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>\""+item[1]+"\"</td><tr>";
+        }
+        rows[rows.length] = "</table>";
+        element.innerHTML += rows.join("\n");
+    }
 
     
 }

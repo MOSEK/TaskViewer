@@ -227,6 +227,10 @@ function TaskFile(data)
     this.barcsparsity = null;
     this.baraalpha = null;
     this.barasparsity = null;
+    
+    this.stringparameters  = null;
+    this.integerparameters = null;
+    this.doubleparameers   = null;
 
     var utf8decoder = new TextDecoder('utf-8');
 
@@ -342,6 +346,45 @@ function TaskFile(data)
         else if (this.tf.curentry_name == 'Task/data/bara/sparsity')
         {
             this.barasparsity = parsematrix(this.tf.curentry_data);
+        }
+
+        else if (this.tf.curentry_name == 'Task/parameter/sparam')
+        {
+            var lines = utf8decoder.decode(this.tf.curentry_data).split("\n");
+            var keyval = new Array();
+            for (var i in lines)
+            {
+                var item = lines[i].split("=");
+                if (item.length == 2)
+                    keyval[keyval.length] = [item[0].trim(),item[1].trim()];
+            }
+            this.stringparameters = keyval;
+        }
+        else if (this.tf.curentry_name == 'Task/parameter/iparam')
+        {
+            var lines = utf8decoder.decode(this.tf.curentry_data).split("\n");
+            var keyval = new Array();
+            for (var i in lines)
+            {
+                var item = lines[i].split("=");
+                if (item.length == 2)
+                    keyval[keyval.length] = [item[0].trim(),item[1].trim()];
+            }
+            this.integerparameters = keyval;
+        }
+        else if (this.tf.curentry_name == 'Task/parameter/dparam')
+        {
+            var lines = utf8decoder.decode(this.tf.curentry_data).split("\n");
+            var keyval = new Array();
+            for (var i in lines)
+            {
+                var item = lines[i].split("=");
+                if (item.length == 2)
+                {
+                    keyval[keyval.length] = [item[0].trim(),item[1].trim().split(" ")[1]];
+                }
+            }
+            this.doubleparameters = keyval;
         }
     }
 

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Task Viewer</title>
+    <script src="jquery-2.1.4.min.js"></script>
+    <script src="tarfile.js"></script>
+    <script src="taskfile.js"></script>
+    <script src="pptask.js"></script>
+
+    <style>
+      .problem-table td { border : solid thin black; }
+      .var-name { color : blue; }
+      .con-name { color : #808080; }
+    </style>
+
+    <script>
+function readSingleFile(e) {
+  var file = e.target.files[0];
+  if (!file) {
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var contents = e.target.result;
+    pptask(contents,document.getElementById('pretty-task'));
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+$(document).ready(function () { $('#file-input').change(readSingleFile); });
+    </script>
+  </head>
+
+  <body>
+    <input type="file" name="Task File" id="file-input" accept=".task" autofocus/>
+    <h3>Contents of the file:</h3>
+    <div id="pretty-task">      
+    </div>
+  </body>
+</html>

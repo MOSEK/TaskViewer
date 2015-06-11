@@ -21,19 +21,20 @@ function TarFile_readentry()
 {
     var head = new DataView(this.data,this.pos,512);
 
-    var asciidecoder = new StringDecoder('ascii');
+    var asciidecoder = new TextDecoder('utf-8');
 
-    var nameend = 0; while (nameend < 100 && head.getUint8(nameend) != 0) ++nameend;
+    var namelen = 0; while (namelen < 100 && head.getUint8(namelen) != 0) ++namelen;
 
-    this.curentry_name = asciidecoder.decode(new Uint8Array(head,0,nameend));
+    var filename = asciidecoder.decode(new Uint8Array(this.data,this.pos,namelen));
+    this.curentry_name = filename;
 
-    var sizebuf = new Uint8Array(this.data,124,12);
+    var sizebuf = new Uint8Array(this.data,this.pos+124,12);
     var size = 0;
     if (sizebuf[0] == 0x80)
     {
-        for (var i = 1; i < 12; ++i):
+        for (var i = 1; i < 12; ++i)
         {
-            size = size * 256 + sizebug[i];
+            size = size * 256 + sizebuf[i];
         }
     }
     else // octal - never happens
@@ -47,7 +48,7 @@ function TarFile_readentry()
     this.curentry_data = new DataView(this.data,this.pos+512,size);
 }
 
-function TarFile_next()
+function TarFile_nextentry()
 {
     this.pos = this.next_pos;
     if (! this.eof() )

@@ -223,6 +223,7 @@ function TaskFile(data)
     this.varbk    = null;
     this.conbound = null;
     this.varbound = null;
+    this.intvaridxs = null;
     this.connames = null;
     this.varnames = null;
     this.conenames = null;
@@ -297,6 +298,10 @@ function TaskFile(data)
         else if (this.tf.curentry_name == 'Task/data/var/bound')
         {
             this.varbound = parsematrix(this.tf.curentry_data).data;
+        }
+        else if (this.tf.curentry_name == 'Task/data/intvar')
+        {
+            this.intvaridxs = parsematrix(this.tf.curentry_data).data;
         }
         else if (this.tf.curentry_name == 'Task/data/con/name')
         {

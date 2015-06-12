@@ -3,12 +3,17 @@
 <html>
   <head>
     <title>Task Viewer</title>
-    <script src="jquery-2.1.4.min.js"></script>
-    <script src="tarfile.js"></script>
-    <script src="taskfile.js"></script>
-    <script src="pptask.js"></script>
+    <script src="jquery-2.1.4/jquery-2.1.4.min.js"></script>
+    <!--<script src="javascript/query.dataTables.min.js"></script>-->
+    <!--<script src="bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>-->
+    <script src="javascript/tarfile.js"></script>
+    <script src="javascript/taskfile.js"></script>
+    <script src="javascript/pptask.js"></script>
+    <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
+
     <!--
-    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" href="bootstrap-3.3.4-dist/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="bootstrap-3.3.4-dist/css/bootstrap.min.css">
     -->
 
     <style>
@@ -16,14 +21,18 @@
       .con-name { color : #808080; }
       .cone-name { color : #808080; }
 
-
-
       #info-table { border : solid thin black; }
 
       #problem-table { cell-spacing : 0px; border-collapse : collapse; empty-cells : show; border : solid thin black; }
-      #problem-table td {  padding : 0 3ps 0 3px; margin : 0px; }
+      #problem-table td {  padding : 0 3px 0 3px; margin : 0px; }
       #problem-table td { white-space : nowrap; }
       #problem-table tr:nth-child(2n+1) {background-color : #e0e0ff; }
+
+      #variables-table td { margin : 0px; padding : 0 3px 0 3px; }
+
+      body { margin : 10px; }
+
+      .hidden { display : none; }
     </style>
 
     <script>
@@ -38,9 +47,11 @@ function readSingleFile(e) {
     var contents = e.target.result;
     pptask(contents,document.getElementById('pretty-task'));
     //MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+
   };
   reader.readAsArrayBuffer(file);
 }
+
 
 $(document).ready(function () { $('#file-input').change(readSingleFile); });
     </script>

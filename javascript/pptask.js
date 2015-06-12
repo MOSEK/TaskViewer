@@ -4,24 +4,33 @@ function varname(s)
     return '<span class="var-name">'+s+'</span>';
 }
 
-function fmtbarelm(alpha,midx,first,last,name)
+function barvarname(s,title)
+{
+    if (typeof title != 'undefined')
+        return '<span class="var-name" title="'+title+'">'+s+'</span>';
+    else
+        return '<span class="var-name">'+s+'</span>';
+}
+
+function fmtbarelm(alpha,midx,first,last,name,dim)
 {
     if (last-first == 1)
     {
         var cof = alpha[first];
+        var title = "PSD("+dim+")";
         if (cof > 0)
         {
             if (cof > 1 || cof < 1)
-                return " + "+cof+" M#"+midx[first]+" "+varname(name);
+                return " + "+cof+" M#"+midx[first]+" "+barvarname(name,title);
             else
-                return " + M#"+midx[first]+" "+varname(name);
+                return " + M#"+midx[first]+" "+barvarname(name,title);
         }
         else if (cof < 0)
         {
             if (cof > -1 || cof < -1)
-                return " - "+(-cof)+" M#"+midx[first]+" "+varname(name);
+                return " - "+(-cof)+" M#"+midx[first]+" "+barvarname(name,title);
             else
-                return " - M#"+midx[first]+" "+varname(name);
+                return " - M#"+midx[first]+" "+barvarname(name,title);
         }
         else
             return "";
@@ -91,6 +100,8 @@ function Table(attrs)
     }
 }
 
+
+
 function pptask(data,element)
 {
     var tf = new TaskFile(data);
@@ -142,7 +153,8 @@ function pptask(data,element)
             cols[sub+tf.numvar].innerHTML = fmtbarelm(tf.barcalpha.valij,
                                                       tf.barcalpha.subj,
                                                       pb,pe,
-                                                      tf.barvarnames[sub]);
+                                                      tf.barvarnames[sub],
+                                                      tf.barvardim[sub]);
         }
     }
 
@@ -189,7 +201,8 @@ function pptask(data,element)
                 cols[tf.numvar+sub].node.innerHTML = fmtbarelm(tf.baraalpha.valij,
                                                                tf.baraalpha.subj,
                                                                pb,pe,
-                                                               tf.barvarnames[sub]);
+                                                               tf.barvarnames[sub],
+                                                               tf.barvardim[sub]);
             }
         }
 
@@ -225,72 +238,120 @@ function pptask(data,element)
 
 
 
-    ppdata = new Array();
-    ppdata[0] = "<table class\"variables-table\">"
 
-    ppdata[ppdata.length] = "<tr><td>With variables</td></tr>";
+    var vartypes = new Int8Array(tf.numvar);
+    if (this.intvaridxs != null)
+    {
+        for (var i = 0; i < this.intvaridxs.length; ++i)
+            vartypes[this.intvaridxs[i]] = 1;
+    }
+
+    var table = new Table({"id" : "variables-table" });
+    element.appendChild(table.node);
+    table.addrow().addcell({"colspan" : "4"}, "With Variables");
+
     for (var i = 0; i < tf.numvar; ++i)
     {
+        var tr       = table.addrow();
+        var lbcell   = tr.addcell();
+        var namecell = tr.addcell({},varname(tf.varnames[i]));
+        var ubcell   = tr.addcell();
+
+        if (vartypes[i] > 0) tr.addcell({},", is integer");
+        else tr.addcell();
+
         if      (tf.varbk[i] == MSK_BK_FX)
-            ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+ tf.varnames[i] + "</span> = " + tf.varbound[i] +"</td></tr>";
+            ubcell.node.innerHTML = "= "+tf.varbound[i];
         else if (tf.varbk[i] == MSK_BK_FR)
-            ppdata[ppdata.length] = "<tr><td /><td> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin;</td></tr>";
+        {
+            lbcell.node.innerHTML = "-&infin; &lt;";
+            ubcell.node.innerHTML = "&lt; &infin;";
+        }
         else if (tf.varbk[i] == MSK_BK_UP)
-            ppdata[ppdata.length] = "<tr><td /><td> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
+        {
+            lbcell.node.innerHTML = "-&infin; &lt;";
+            ubcell.node.innerHTML = "&leq; " + tf.varbound[tf.numvar+i];
+        }
         else if (tf.varbk[i] == MSK_BK_LO)
-            ppdata[ppdata.length] = "<tr><td /><td>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin; </td></tr>";
+        {
+            lbcell.node.innerHTML =  "" + tf.varbound[i] + " &lt;";
+            ubcell.node.innerHTML = "&leq; &infin;"
+        }
         else if (tf.varbk[i] == MSK_BK_RA)
-            ppdata[ppdata.length] = "<tr><td /><td>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
+        {
+            lbcell.node.innerHTML =  "" + tf.varbound[i] + " &lt;";
+            ubcell.node.innerHTML = "&leq; " + tf.varbound[tf.numvar+i];
+        }
     }
 
     for (var i = 0; i < tf.numbarvar; ++i)
     {
-        //ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+tf.barvarnames[i]+"</span> &in; $S_+^{"+tf.barvardim[i]+"}$</td></tr>";
-        ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+tf.barvarnames[i]+"</span> &in; PSD("+tf.barvardim[i]+")</td></tr>";
+        var tr = table.addrow();
+        tr.addcell();
+        tr.addcell({},barvarname(tf.barvarnames[i]));
+        tr.addcell({"colspan" : "2"}, "PSD("+tf.barvardim[i]+")")
     }
 
-    ppdata[ppdata.length] = "</table>";
 
-    element.innerHTML += ppdata.join("\n")+"\n";
 
-    element.innerHTML += "<h1>Solver parameters</h1>\n";
+
+
     if (tf.integerparameters != null)
     {
-        element.innerHTML += "<h2>Integer parameters</h2>\n";
-        var rows = new Array();
-        rows[0] = "<table class=\"parameter-table\">";
+        element.innerHTML += "<h2 class='toggle-next-div'>Integer parameters</h2>";
+        var div = document.createElement("div");
+        div.setAttribute("class","hidden");
+        element.appendChild(div);
+
+        var table = new Table({ "class" : "parameter-table" });
+        div.appendChild(table.node);
+
         for (var i in tf.integerparameters)
         {
             var item = tf.integerparameters[i];
-            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>"+item[1]+"</td><tr>";
+            var tr = table.addrow();
+            tr.addcell({},item[0]);
+            tr.addcell({},item[1]);
         }
-        rows[rows.length] = "</table>";
-        element.innerHTML += rows.join("\n");
     }
     if (tf.doubleparameters != null)
     {
-        element.innerHTML += "<h2>Double parameters</h2>\n";
-        var rows = new Array();
-        rows[0] = "<table class=\"parameter-table\">";
+        element.innerHTML += "<h2 class='toggle-next-div'>Double parameters</h2>";
+        var div = document.createElement("div");
+        div.setAttribute("class","hidden");
+        element.appendChild(div);
+
+        var table = new Table({ "class" : "parameter-table" });
+        div.appendChild(table.node);
+
+
         for (var i in tf.doubleparameters)
         {
             var item = tf.doubleparameters[i];
-            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>"+item[1]+"</td><tr>";
+            var tr = table.addrow();
+            tr.addcell({},item[0]);
+            tr.addcell({},item[1]);
         }
-        rows[rows.length] = "</table>";
-        element.innerHTML += rows.join("\n");
     }
     if (tf.stringparameters != null)
     {
-        element.innerHTML += "<h2>String parameters</h2>\n";
-        var rows = new Array();
-        rows[0] = "<table class=\"parameter-table\">";
+        element.innerHTML += "<h2 class='toggle-next-div'>String parameters</h2>\n";
+        var div = document.createElement("div");
+        element.appendChild(div);
+
+        var table = new Table({ "class" : "parameter-table" });
+        div.setAttribute("class","hidden");
+        div.appendChild(table.node);
+
         for (var i in tf.stringparameters)
         {
             var item = tf.stringparameters[i];
-            rows[rows.length] = "<tr><td>"+item[0]+"</td><td>\""+item[1]+"\"</td><tr>";
+            var tr = table.addrow();
+            tr.addcell({},item[0]);
+            tr.addcell({},item[1]);
         }
-        rows[rows.length] = "</table>";
-        element.innerHTML += rows.join("\n");
     }
+
+    $("*[class|=toggle-next-div]").click(function () { $(this).next().toggleClass("hidden") } );
 }
+

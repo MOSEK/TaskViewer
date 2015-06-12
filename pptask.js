@@ -50,35 +50,87 @@ function fmtlinelm(cof,name)
         return "";
 }
 
+function TableCell(attrs,text)
+{
+    var node = document.createElement("td")
+    if (typeof attrs != 'undefined')
+    {
+        for ( var a in attrs )
+            node.setAttribute(a,attrs[a]);
+    }
+    if (typeof text != 'undefined')
+        node.innerHTML = text
+    this.node = node;
+}
+
+function TableRow(attrs)
+{
+    var node = document.createElement("tr")
+    if (typeof text != 'undefined')
+        for ( var a in attrs )
+            node.setAttribute(a,attrs[a]);
+    this.node = node;
+    this.addcell = function(attrs,text) { var td = new TableCell(attrs,text); this.node.appendChild(td.node); return td; }
+    this.addcells = function(n) { var cells = new Array(n); for (var i = 0; i < n; ++i) cells[i] = this.addcell(); return cells; }
+}
+
+function Table(attrs)
+{
+    var node = document.createElement("table");
+    if (typeof attrs != 'undefined')
+        for ( var a in attrs )
+            node.setAttribute(a,attrs[a]);
+
+    this.node = node;
+    this.addrow  = function(attrs) { var tr = new TableRow(attrs); this.node.appendChild(tr.node); return tr; }
+    this.addonecell = function(text) {
+        var tr = new TableRow(attrs);
+        this.node.appendChild(tr.node);
+        var td = tr.addcell({},text);
+        return td;
+    }
+}
+
 function pptask(data,element)
 {
     var tf = new TaskFile(data);
 
-    element.innerHTML = "";
-    element.innerHTML += ("<h1>Summary</h1>\n"+
-                          "<table class=\"info-table\">\n"+
-                          "  <tr><td>File written by Mosek version</td>  <td>"+tf.mosekver+"</td></tr>\n"+
-                          "  <tr><td>Task Name</td>           <td>"+(tf.taskname.length > 0 ? tf.taskname : "<anonymous>")+"</td></tr>\n"+
-                          "  <tr><td>Variables</td>           <td>"+tf.numvar+"</td></tr>\n"+
-                          "  <tr><td>Constraints</td>         <td>"+tf.numcon+"</td></tr>\n"+
-                          "  <tr><td>Quadratic Cones</td>     <td>"+tf.numcone+"</td></tr>\n"+
-                          "  <tr><td>PSD Variables</td>       <td>"+tf.numbarvar+"</td></tr>\n"+
-                          "  <tr><td>A non-zeros</td>         <td>"+tf.numanz+"</td></tr>\n"+
-                          "  <tr><td>Q non-zeros</td>         <td>"+tf.numqnz+"</td></tr>\n"+
-                          "  <tr><td>Symmetric Matrixes</td>  <td>"+tf.numsymmat+"</td></tr>\n"+
-                          "</table>\n")
-    element.innerHTML += "<h1>Problem</h1>\n";
+    var h1node = document.createElement("h1");
+    h1node.innerHTML = "Summary";
+    element.appendChild(h1node)
 
-    var ppdata = new Array();
+    var table =  new Table({ 'id' : "info-table" });
+    element.appendChild(table.node);
 
-    ppdata[0] = "<table class=\"problem-table\" style=\"border : solid thin black; \">"
+    var tr = table.addrow({}); tr.addcell({},"File written by Mosek version"); tr.addcell({},tf.mosekver);
+    var tr = table.addrow({}); tr.addcell({},"Task Name"); tr.addcell({},""+tf.taskname);
+    var tr = table.addrow({}); tr.addcell({},"Variables"); tr.addcell({},""+tf.numvar);
+    var tr = table.addrow({}); tr.addcell({},"Constraints"); tr.addcell({},""+tf.numcon);
+    var tr = table.addrow({}); tr.addcell({},"Quadratic Cones"); tr.addcell({},""+tf.numcone);
+    var tr = table.addrow({}); tr.addcell({},"PSD Variables"); tr.addcell({},""+tf.numbarvar);
+    var tr = table.addrow({}); tr.addcell({},"A non-zeros"); tr.addcell({},""+tf.numanz);
 
-    var objstr = new Array(tf.numvar+tf.numbarvar+1);
+
+    var h1node = document.createElement("h1");
+    h1node.innerHTML = "Problem";
+    element.appendChild(h1node)
+
+
+    var probtablenumcol = 3+tf.numvar+tf.numbarvar;
+
+    var table = new Table({ "id" : "problem-table" });
+    element.appendChild(table.node);
+
+    var tr = table.addrow();
+    tr.addcell({"class" : "obj-sense"},(tf.objsense == "MIN" ? "Minimize" : "Maximize"))
+    tr.addcell();
+    var cols = tr.addcells(tf.numvar+tf.numbarvar);
+    tr.addcell();
+
     if (tf.c != null)
-    {
         for (var i = 0; i < tf.c.length; ++i)
-            objstr[i] = fmtlinelm(tf.c[i],tf.varnames[i]);
-    }
+            cols[i].node.innerHTML = fmtlinelm(tf.c[i],tf.varnames[i]);
+
     if (tf.barcsparsity != null)
     {
         for (var k = 0; k < tf.barcsparsity.length; ++k)
@@ -87,18 +139,12 @@ function pptask(data,element)
             var pb  = tf.barcalpha.ptrb[k];
             var pe  = tf.barcalpha.ptrb[k+1];
 
-            objstr[sub+tf.numvar] = fmtbarelm(tf.barcalpha.valij,
-                                              tf.barcalpha.subj,
-                                              pb,pe,
-                                              tf.barvarnames[sub]);
+            cols[sub+tf.numvar].innerHTML = fmtbarelm(tf.barcalpha.valij,
+                                                      tf.barcalpha.subj,
+                                                      pb,pe,
+                                                      tf.barvarnames[sub]);
         }
     }
-
-
-    var probtablenumcol = 3+tf.numvar+tf.numbarvar;
-
-    ppdata[ppdata.length] = "<tr><td class=\"obj-sense\">" + (tf.objsense == "MIN" ? "Minimize" : "Maximize") + "</td><td></td><td>" + objstr.join("</td><td>") + "</td></tr>";
-    ppdata[ppdata.length] = "<tr><td colspan=\""+probtablenumcol+"\">Such that</td></td>"
 
     if (tf.barasparsity != null)
     {
@@ -106,33 +152,30 @@ function pptask(data,element)
         for (var i = 0; i < tf.barasparsity.nnz; ++i)
             ++baraptrb[tf.barasparsity.subi[i]+1];
         for (var i = 0; i < tf.barasparsity.nnz; ++i)
-            baraptrb[tf.barasparsity.subi[i]+1] += baraptrb[tf.barasparsity.subi[i]];
+            baraptrb[i+1] += baraptrb[i];
     }
-
 
     for (var i = 0; i < tf.numcon; ++i)
     {
-        var conarr = new Array();
-        conarr[0]  = "<td><span  class=\"con-name\">"+tf.connames[i]+"</span></td>";
+        var  tr = table.addrow();
+        tr.addcell({},"<span  class=\"con-name\">"+tf.connames[i]+"</span>");
+
         var bk = tf.conbk[i];
         if (bk == MSK_BK_LO ||
             bk == MSK_BK_RA )
-        {
-            conarr[conarr.length] = "<td class=\"con-lb\">"+tf.conbound[i]+" &leq;</td>"
-        }
+            tr.addcell({"class" : "con-lb"},""+tf.conbound[i]+" &leq;");
         else
+            tr.addcell({"class" : "con-lb"});
+
+        var cols = tr.addcells(tf.numvar+tf.numbarvar);
+
+        if (tf.A != null)
         {
-            conarr[conarr.length] = "<td class=\"con-lb\"></td>"
-        }
-
-        conarr[conarr.length] = "<td>";
-
-        var conexpr = new Array(tf.numvar+tf.numbarvar);
-
-        for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
-        {
-            var sub = tf.A.subj[k];
-            conexpr[sub] = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
+            for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
+            {
+                var sub = tf.A.subj[k];
+                cols[sub].node.innerHTML = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
+            }
         }
 
         if (tf.barasparsity != null)
@@ -143,35 +186,24 @@ function pptask(data,element)
                 var pb  = tf.baraalpha.ptrb[k];
                 var pe  = tf.baraalpha.ptrb[k+1];
 
-                conexpr[tf.numvar+sub] = fmtbarelm(tf.baraalpha.valij,
-                                                   tf.baraalpha.subj,
-                                                   pb,pe,
-                                                   tf.barvarnames[sub]);
+                cols[tf.numvar+sub].node.innerHTML = fmtbarelm(tf.baraalpha.valij,
+                                                               tf.baraalpha.subj,
+                                                               pb,pe,
+                                                               tf.barvarnames[sub]);
             }
         }
 
-        conarr[conarr.length] = conexpr.join("</td><td>");
-        conarr[conarr.length] = "</td>"
         if (bk == MSK_BK_UP ||
             bk == MSK_BK_RA )
-        {
-            conarr[conarr.length] = "<td class=\"con-ub\">&leq; "+tf.conbound[tf.numcon+i]+"</td>"
-        }
+            tr.addcell({"class" : "con-ub"}, "&leq; "+tf.conbound[tf.numcon+i]);
         else if (bk == MSK_BK_FX)
-        {
-            conarr[conarr.length] = "<td class=\"con-ub\">= "+tf.conbound[tf.numcon+i]+"</td>"
-        }
+            tr.addcell({"class" : "con-ub"}, "= "+tf.conbound[tf.numcon+i]);
         else
-        {
-            conarr[conarr.length] = "<td class=\"con-ub\"></td>"
-        }
-        ppdata[ppdata.length] = "<tr>"+conarr.join("")+"</tr>";
-
-
-
+            tr.addcell({"class" : "con-ub"});
     }
+
+
     // cones
-    console.log("cones",tf.numcone,tf.qconesub,tf.qconetype);
     for (var i = 0; i < tf.numcone; ++i)
     {
         var conesize = tf.qconesub.ptrb[i+1] - tf.qconesub.ptrb[i];
@@ -179,15 +211,18 @@ function pptask(data,element)
         for (var j = tf.qconesub.ptrb[i]; j < tf.qconesub.ptrb[i+1]; ++j)
             conearr[conearr.length] = varname(tf.varnames[tf.qconesub.subj[j]]);
 
-        //var conedef = "("+conearr.join(",")+") &in; $Q^{"+conesize+"}"+(tf.qconetype[i] == MSK_CT_QUAD ? "" : "_r")+"$";
         var conedef = "("+conearr.join(",")+") &in; "+(tf.qconetype[i] == MSK_CT_QUAD ? "QCone" : "RotatedQCone")+"("+conesize+")";
 
-        ppdata[ppdata.length] = "<tr><td class=\"cone-name\">"+tf.conenames[i]+"</td><td></td><td colspan=\""+(probtablenumcol-2)+"\">"+conedef+"</td></tr>";
+        var tr = table.addrow();
+        tr.addcell({"class" : "cone-name" }, tf.conenames[i]);
+        tr.addcell();
+        tr.addcell({"colspan" : ""+(probtablenumcol-2)},conedef);
     }
 
-    ppdata[ppdata.length] = "</table>";
 
-    element.innerHTML += ppdata.join("\n")+"\n";
+
+
+
 
 
     ppdata = new Array();

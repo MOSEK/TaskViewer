@@ -21,6 +21,10 @@ var MSK_BK_FX = 120; // 'x'
 var MSK_BK_FR = 102; // 'f'
 var MSK_BK_RA = 114; // 'r'
 
+var MSK_CT_QUAD  = 113; // quad
+var MSK_CT_RQUAD = 114; // rquad
+
+
 function Int64Array(data,pos,num)
 {
     var tmp = new Int32Array(data,pos,num*2);
@@ -227,6 +231,9 @@ function TaskFile(data)
     this.barcsparsity = null;
     this.baraalpha = null;
     this.barasparsity = null;
+
+    this.qconetype = null;
+    this.qconesub  = null;
     
     this.stringparameters  = null;
     this.integerparameters = null;
@@ -326,6 +333,7 @@ function TaskFile(data)
                     this.barvarnames[i] = "barvar#"+i;
             }
         }
+
         else if (this.tf.curentry_name == 'Task/data/barvar/dim')
         {
             this.barvardim = parsematrix(this.tf.curentry_data).data;
@@ -346,6 +354,15 @@ function TaskFile(data)
         else if (this.tf.curentry_name == 'Task/data/bara/sparsity')
         {
             this.barasparsity = parsematrix(this.tf.curentry_data);
+        }
+
+        else if (this.tf.curentry_name == 'Task/data/qcone/conetype')
+        {
+            this.qconetype = parsematrix(this.tf.curentry_data).data;
+        }
+        else if (this.tf.curentry_name == 'Task/data/qcone/sub')
+        {
+            this.qconesub = parsematrix(this.tf.curentry_data);
         }
 
         else if (this.tf.curentry_name == 'Task/parameter/sparam')

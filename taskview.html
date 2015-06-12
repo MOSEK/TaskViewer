@@ -7,11 +7,14 @@
     <script src="tarfile.js"></script>
     <script src="taskfile.js"></script>
     <script src="pptask.js"></script>
+    <!--
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    -->
 
     <style>
-      /*.problem-table td { border : solid thin black; }*/
       .var-name { color : blue; }
       .con-name { color : #808080; }
+      .cone-name { color : #808080; }
 
       .problem-table tr:nth-child(2n+1) {background-color : #e0e0ff; }
 
@@ -31,6 +34,7 @@ function readSingleFile(e) {
   reader.onload = function(e) {
     var contents = e.target.result;
     pptask(contents,document.getElementById('pretty-task'));
+    //MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
   };
   reader.readAsArrayBuffer(file);
 }

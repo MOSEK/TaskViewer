@@ -95,11 +95,10 @@ function pptask(data,element)
     }
 
 
-
+    var probtablenumcol = 3+tf.numvar+tf.numbarvar;
 
     ppdata[ppdata.length] = "<tr><td class=\"obj-sense\">" + (tf.objsense == "MIN" ? "Minimize" : "Maximize") + "</td><td></td><td>" + objstr.join("</td><td>") + "</td></tr>";
-    ppdata[ppdata.length] = "<tr><td>Such that</td></td>"
-
+    ppdata[ppdata.length] = "<tr><td colspan=\""+probtablenumcol+"\">Such that</td></td>"
 
     if (tf.barasparsity != null)
     {
@@ -110,15 +109,12 @@ function pptask(data,element)
             baraptrb[tf.barasparsity.subi[i]+1] += baraptrb[tf.barasparsity.subi[i]];
     }
 
-    //console.log("A");
-    //console.log(tf.A);
 
     for (var i = 0; i < tf.numcon; ++i)
     {
         var conarr = new Array();
         conarr[0]  = "<td><span  class=\"con-name\">"+tf.connames[i]+"</span></td>";
         var bk = tf.conbk[i];
-        //console.log("bk = "+bk+ ", bound = "+tf.conbound[i]+", "+tf.conbound[i+tf.numcon]);
         if (bk == MSK_BK_LO ||
             bk == MSK_BK_RA )
         {
@@ -133,15 +129,11 @@ function pptask(data,element)
 
         var conexpr = new Array(tf.numvar+tf.numbarvar);
 
-        //console.log(tf.A.valij);
-        //console.log("range : "+tf.A.ptrb[i]+" - " +tf.A.ptrb[i+1]);
         for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
         {
             var sub = tf.A.subj[k];
             conexpr[sub] = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
         }
-        //console.log("k : "+k);
-        
 
         if (tf.barasparsity != null)
         {
@@ -150,7 +142,7 @@ function pptask(data,element)
                 var sub = tf.barasparsity.subj[k];
                 var pb  = tf.baraalpha.ptrb[k];
                 var pe  = tf.baraalpha.ptrb[k+1];
-                
+
                 conexpr[tf.numvar+sub] = fmtbarelm(tf.baraalpha.valij,
                                                    tf.baraalpha.subj,
                                                    pb,pe,
@@ -173,8 +165,26 @@ function pptask(data,element)
         {
             conarr[conarr.length] = "<td class=\"con-ub\"></td>"
         }
-        ppdata[ppdata.length] = "<tr class=\""+(ppdata.length % 2 == 0 ? "even" : "odd")+"\">"+conarr.join("")+"</tr>";
+        ppdata[ppdata.length] = "<tr>"+conarr.join("")+"</tr>";
+
+
+
     }
+    // cones
+    console.log("cones",tf.numcone,tf.qconesub,tf.qconetype);
+    for (var i = 0; i < tf.numcone; ++i)
+    {
+        var conesize = tf.qconesub.ptrb[i+1] - tf.qconesub.ptrb[i];
+        var conearr = new Array();
+        for (var j = tf.qconesub.ptrb[i]; j < tf.qconesub.ptrb[i+1]; ++j)
+            conearr[conearr.length] = varname(tf.varnames[tf.qconesub.subj[j]]);
+
+        //var conedef = "("+conearr.join(",")+") &in; $Q^{"+conesize+"}"+(tf.qconetype[i] == MSK_CT_QUAD ? "" : "_r")+"$";
+        var conedef = "("+conearr.join(",")+") &in; "+(tf.qconetype[i] == MSK_CT_QUAD ? "QCone" : "RotatedQCone")+"("+conesize+")";
+
+        ppdata[ppdata.length] = "<tr><td class=\"cone-name\">"+tf.conenames[i]+"</td><td></td><td colspan=\""+(probtablenumcol-2)+"\">"+conedef+"</td></tr>";
+    }
+
     ppdata[ppdata.length] = "</table>";
 
     element.innerHTML += ppdata.join("\n")+"\n";
@@ -187,19 +197,21 @@ function pptask(data,element)
     for (var i = 0; i < tf.numvar; ++i)
     {
         if      (tf.varbk[i] == MSK_BK_FX)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10><span class=\"var-name\">"+ tf.varnames[i] + "</span> = " + tf.varbound[i] +"</td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+ tf.varnames[i] + "</span> = " + tf.varbound[i] +"</td></tr>";
         else if (tf.varbk[i] == MSK_BK_FR)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin;</td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin;</td></tr>";
         else if (tf.varbk[i] == MSK_BK_UP)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td> -&infin; &lt; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
         else if (tf.varbk[i] == MSK_BK_LO)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin; </td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &lt; &infin; </td></tr>";
         else if (tf.varbk[i] == MSK_BK_RA)
-            ppdata[ppdata.length] = "<tr><td /><td colspan=10>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
+            ppdata[ppdata.length] = "<tr><td /><td>"+tf.varbound[i]+" &leq; <span class=\"var-name\">" +tf.varnames[i] + "</span> &leq; " + tf.varbound[tf.numvar+i] +"</td></tr>";
     }
+
     for (var i = 0; i < tf.numbarvar; ++i)
     {
-        ppdata[ppdata.length] = "<tr><td /><td colspan=10><span class=\"var-name\">"+tf.barvarnames[i]+"</span> &in; PSD("+tf.barvardim[i]+")</td></tr>";
+        //ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+tf.barvarnames[i]+"</span> &in; $S_+^{"+tf.barvardim[i]+"}$</td></tr>";
+        ppdata[ppdata.length] = "<tr><td /><td><span class=\"var-name\">"+tf.barvarnames[i]+"</span> &in; PSD("+tf.barvardim[i]+")</td></tr>";
     }
 
     ppdata[ppdata.length] = "</table>";

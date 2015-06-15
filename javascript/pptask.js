@@ -1,4 +1,3 @@
-
 function varname(s)
 {
     return '<span class="var-name">'+s+'</span>';
@@ -72,10 +71,23 @@ function TableCell(attrs,text)
     this.node = node;
 }
 
+function TableHeadCell(attrs,text)
+{
+    var node = document.createElement("th")
+    if (typeof attrs != 'undefined')
+    {
+        for ( var a in attrs )
+            node.setAttribute(a,attrs[a]);
+    }
+    if (typeof text != 'undefined')
+        node.innerHTML = text
+    this.node = node;
+}
+
 function TableRow(attrs)
 {
     var node = document.createElement("tr")
-    if (typeof text != 'undefined')
+    if (typeof attrs != 'undefined')
         for ( var a in attrs )
             node.setAttribute(a,attrs[a]);
     this.node = node;
@@ -83,7 +95,18 @@ function TableRow(attrs)
     this.addcells = function(n) { var cells = new Array(n); for (var i = 0; i < n; ++i) cells[i] = this.addcell(); return cells; }
 }
 
-function Table(attrs)
+
+function TableHead(elmname)
+{
+    var node = document.createElement(elmname)
+    var n = document.createElement("tr")
+    node.appendChild(n);
+
+    this.node = node;
+    this.addcell = function(attrs,text) { var td = new TableHeadCell(attrs,text); this.node.appendChild(td.node); return td; }
+}
+
+function Table(attrs,hashead,hasfoot)
 {
     var node = document.createElement("table");
     if (typeof attrs != 'undefined')
@@ -91,10 +114,44 @@ function Table(attrs)
             node.setAttribute(a,attrs[a]);
 
     this.node = node;
-    this.addrow  = function(attrs) { var tr = new TableRow(attrs); this.node.appendChild(tr.node); return tr; }
+
+    if (hashead)
+    {
+        this.thead  = new TableHead("thead")
+        this.node.appendChild(this.thead.node)
+    }
+
+    this.tbody = document.createElement('tbody');
+    this.node.appendChild(this.tbody);
+
+    if (hasfoot)
+    {
+        this.tfoot = new TableHead("tfoot")
+        this.node.appendChild(this.tfoot.node)
+    }
+
+    this.addhead = function (attrs, text) {
+        if (typeof this.thead != 'undefined')
+            this.thead.addcell(attrs,text);
+        if (typeof this.tfoot != 'undefined')
+            this.tfoot.addcell(attrs,text);
+    }
+
+    this.addfootrow
+
+    this.addcol = function(attrs) {
+        var elt = document.createElement("col");
+        if (typeof attrs != 'undefined')
+            for (var a in attrs)
+                elt.setAttribute(a,attrs[a]);
+        this.node.appendChild(elt);
+        return elt;
+    }
+
+    this.addrow  = function(attrs) { var tr = new TableRow(attrs); this.tbody.appendChild(tr.node); return tr; }
     this.addonecell = function(text) {
         var tr = new TableRow(attrs);
-        this.node.appendChild(tr.node);
+        this.tbody.appendChild(tr.node);
         var td = tr.addcell({},text);
         return td;
     }
@@ -102,35 +159,28 @@ function Table(attrs)
 
 
 
-function pptask(data,element)
+
+
+
+
+
+function renderProblem(tf,element,rowsubset,colsubset)
 {
-    var tf = new TaskFile(data);
-
-    var h1node = document.createElement("h1");
-    h1node.innerHTML = "Summary";
-    element.appendChild(h1node)
-
-    var table =  new Table({ 'id' : "info-table" });
-    element.appendChild(table.node);
-
-    var tr = table.addrow({}); tr.addcell({},"File written by Mosek version"); tr.addcell({},tf.mosekver);
-    var tr = table.addrow({}); tr.addcell({},"Task Name"); tr.addcell({},""+tf.taskname);
-    var tr = table.addrow({}); tr.addcell({},"Variables"); tr.addcell({},""+tf.numvar);
-    var tr = table.addrow({}); tr.addcell({},"Constraints"); tr.addcell({},""+tf.numcon);
-    var tr = table.addrow({}); tr.addcell({},"Quadratic Cones"); tr.addcell({},""+tf.numcone);
-    var tr = table.addrow({}); tr.addcell({},"PSD Variables"); tr.addcell({},""+tf.numbarvar);
-    var tr = table.addrow({}); tr.addcell({},"A non-zeros"); tr.addcell({},""+tf.numanz);
-
-
-    var h1node = document.createElement("h1");
-    h1node.innerHTML = "Problem";
-    element.appendChild(h1node)
-
-
     var probtablenumcol = 3+tf.numvar+tf.numbarvar;
 
-    var table = new Table({ "id" : "problem-table" });
+    if (typeof rowsubset == 'undefined')
+    {
+        rowsubset = new Int32Array(tf.numcon);
+        for (var i = 0; i < tf.numcon; ++i) rowsubset[i] = i;
+    }
+
+    var table = new Table({ "id" : "problem-table" },true,true);
     element.appendChild(table.node);
+
+    table.addhead(); table.addhead();
+    for (var i = 0; i < tf.numvar;    ++i) table.addhead({"id" : "var-"+i},tf.varnames[i]);
+    for (var i = 0; i < tf.numbarvar; ++i) table.addhead({"id" : "var-"+(i+tf.numvar)},tf.barvarnames[i]);
+    table.addhead();
 
     var tr = table.addrow();
     tr.addcell({"class" : "obj-sense"},(tf.objsense == "MIN" ? "Minimize" : "Maximize"))
@@ -167,8 +217,17 @@ function pptask(data,element)
             baraptrb[i+1] += baraptrb[i];
     }
 
-    for (var i = 0; i < tf.numcon; ++i)
+    var prev = -1;
+    for (var ii = 0; ii < rowsubset.length; ++ii)
     {
+        var i = rowsubset[ii];
+
+        if (prev < i - 1) // skipped rows, insert a marker
+        {
+            table.addrow().addcell({"colspan" : probtablenumcol, "style" : "background-color : #ffd0d0;"},"... "+(i-1-prev)+" hidden rows");
+            table.addrow({"display" : "none"}).addcell({"colspan" : probtablenumcol});
+        }
+
         var  tr = table.addrow();
         tr.addcell({},"<span  class=\"con-name\">"+tf.connames[i]+"</span>");
 
@@ -213,6 +272,13 @@ function pptask(data,element)
             tr.addcell({"class" : "con-ub"}, "= "+tf.conbound[tf.numcon+i]);
         else
             tr.addcell({"class" : "con-ub"});
+        prev = i;
+    }
+
+    if (prev < tf.numcon-1) // skipped rows, insert a marker
+    {
+        table.addrow().addcell({"colspan" : probtablenumcol, "style" : "background-color : #ffd0d0;"},"... "+(tf.numcon-1-prev)+" hidden rows");
+        table.addrow({"display" : "none"}).addcell({"colspan" : probtablenumcol});
     }
 
 
@@ -226,18 +292,18 @@ function pptask(data,element)
 
         var conedef = "("+conearr.join(",")+") &in; "+(tf.qconetype[i] == MSK_CT_QUAD ? "QCone" : "RotatedQCone")+"("+conesize+")";
 
-        var tr = table.addrow();
+        var tr = table.addrow({"class" : "cone-row" });
         tr.addcell({"class" : "cone-name" }, tf.conenames[i]);
         tr.addcell();
         tr.addcell({"colspan" : ""+(probtablenumcol-2)},conedef);
     }
 
 
-
-
-
-
-
+    var tr = table.addrow({"class" : "sub-header"});
+    var td = document.createElement("th");
+    td.setAttribute("colspan", probtablenumcol);
+    td.innerHTML = "Variable domains";
+    tr.node.appendChild(td);
 
     var vartypes = new Int8Array(tf.numvar);
     if (this.intvaridxs != null)
@@ -246,62 +312,93 @@ function pptask(data,element)
             vartypes[this.intvaridxs[i]] = 1;
     }
 
-    var table = new Table({"id" : "variables-table" });
-    element.appendChild(table.node);
-    table.addrow().addcell({"colspan" : "4"}, "With Variables");
+    var tr = table.addrow({"class":"var-bound-row"});
+    tr.addcell(undefined,"Lower"); tr.addcell();
+    var lbcells = tr.addcells(tf.numvar+tf.numcon);
+    tr.addcell()
+
+    var tr = table.addrow({"class":"var-bound-row"});
+    tr.addcell(undefined,"Upper"); tr.addcell();
+    var ubcells = tr.addcells(tf.numvar+tf.numcon);
+    tr.addcell()
+
+    var tr = table.addrow({"class":"var-bound-row"});
+    tr.addcell(); tr.addcell();
+    var tpcells = tr.addcells(tf.numvar+tf.numcon);
+    tr.addcell()
 
     for (var i = 0; i < tf.numvar; ++i)
     {
-        var tr       = table.addrow();
-        var lbcell   = tr.addcell();
-        var namecell = tr.addcell({},varname(tf.varnames[i]));
-        var ubcell   = tr.addcell();
-
-        if (vartypes[i] > 0) tr.addcell({},", is integer");
-        else tr.addcell();
+        if (vartypes[i] > 0) tpcells[i].node.innerHTML = 'int';
 
         if      (tf.varbk[i] == MSK_BK_FX)
-            ubcell.node.innerHTML = "= "+tf.varbound[i];
+            lbcells[i].node.innerHTML = "= "+tf.varbound[i];
+
         else if (tf.varbk[i] == MSK_BK_FR)
         {
-            lbcell.node.innerHTML = "-&infin; &lt;";
-            ubcell.node.innerHTML = "&lt; &infin;";
+            lbcells[i].node.innerHTML = "-&infin;";
+            ubcells[i].node.innerHTML = "&infin;";
         }
         else if (tf.varbk[i] == MSK_BK_UP)
         {
-            lbcell.node.innerHTML = "-&infin; &lt;";
-            ubcell.node.innerHTML = "&leq; " + tf.varbound[tf.numvar+i];
+            lbcells[i].node.innerHTML = "-&infin;";
+            ubcells[i].node.innerHTML = tf.varbound[tf.numvar+i];
         }
         else if (tf.varbk[i] == MSK_BK_LO)
         {
-            lbcell.node.innerHTML =  "" + tf.varbound[i] + " &lt;";
-            ubcell.node.innerHTML = "&leq; &infin;"
+            lbcells[i].node.innerHTML =  tf.varbound[i];
+            ubcells[i].node.innerHTML = "&infin;"
         }
         else if (tf.varbk[i] == MSK_BK_RA)
         {
-            lbcell.node.innerHTML =  "" + tf.varbound[i] + " &lt;";
-            ubcell.node.innerHTML = "&leq; " + tf.varbound[tf.numvar+i];
+            lbcells[i].node.innerHTML = tf.varbound[i];
+            ubcells[i].node.innerHTML = tf.varbound[tf.numvar+i];
         }
     }
 
     for (var i = 0; i < tf.numbarvar; ++i)
     {
-        var tr = table.addrow();
-        tr.addcell();
-        tr.addcell({},barvarname(tf.barvarnames[i]));
-        tr.addcell({"colspan" : "2"}, "PSD("+tf.barvardim[i]+")")
+        tpcells[i+tf.numvar].node.innerHTML = "PSD("+tf.barvardim[i]+")";
     }
+}
 
 
+
+var global_con_subset    = undefined;
+var global_var_subset    = undefined;
+var global_barvar_subset = undefined;
+var global_cone_subset   = undefined;
+
+
+function pptask(data,element)
+{
+    var tf = new TaskFile(data);
+
+    var element = document.getElementById("pretty-task-info");
+    var table =  new Table({ 'id' : "info-table" });
+    element.appendChild(table.node);
+
+    var tr = table.addrow({}); tr.addcell({},"File written by Mosek version"); tr.addcell({},tf.mosekver);
+    var tr = table.addrow({}); tr.addcell({},"Task Name"); tr.addcell({},""+tf.taskname);
+    var tr = table.addrow({}); tr.addcell({},"Variables"); tr.addcell({},""+tf.numvar);
+    var tr = table.addrow({}); tr.addcell({},"Constraints"); tr.addcell({},""+tf.numcon);
+    var tr = table.addrow({}); tr.addcell({},"Quadratic Cones"); tr.addcell({},""+tf.numcone);
+    var tr = table.addrow({}); tr.addcell({},"PSD Variables"); tr.addcell({},""+tf.numbarvar);
+    var tr = table.addrow({}); tr.addcell({},"A non-zeros"); tr.addcell({},""+tf.numanz);
+
+    var element = document.getElementById("pretty-problem");
+
+    var div = document.createElement("div");
+    div.setAttribute("id","div-problem-table");
+    element.appendChild(div);
+
+    renderProblem(tf,div);
 
 
 
     if (tf.integerparameters != null)
     {
-        element.innerHTML += "<h2 class='toggle-next-div'>Integer parameters</h2>";
-        var div = document.createElement("div");
-        div.setAttribute("class","hidden");
-        element.appendChild(div);
+        div = document.getElementById("pretty-iparam-table");
 
         var table = new Table({ "class" : "parameter-table" });
         div.appendChild(table.node);
@@ -316,10 +413,7 @@ function pptask(data,element)
     }
     if (tf.doubleparameters != null)
     {
-        element.innerHTML += "<h2 class='toggle-next-div'>Double parameters</h2>";
-        var div = document.createElement("div");
-        div.setAttribute("class","hidden");
-        element.appendChild(div);
+        div = document.getElementById("pretty-dparam-table");
 
         var table = new Table({ "class" : "parameter-table" });
         div.appendChild(table.node);
@@ -335,9 +429,7 @@ function pptask(data,element)
     }
     if (tf.stringparameters != null)
     {
-        element.innerHTML += "<h2 class='toggle-next-div'>String parameters</h2>\n";
-        var div = document.createElement("div");
-        element.appendChild(div);
+        div = document.getElementById("pretty-sparam-table");
 
         var table = new Table({ "class" : "parameter-table" });
         div.setAttribute("class","hidden");
@@ -351,7 +443,5 @@ function pptask(data,element)
             tr.addcell({},item[1]);
         }
     }
-
-    $("*[class|=toggle-next-div]").click(function () { $(this).next().toggleClass("hidden") } );
 }
 

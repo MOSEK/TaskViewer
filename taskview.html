@@ -23,12 +23,35 @@
 
       #info-table { border : solid thin black; }
 
-      #problem-table { cell-spacing : 0px; border-collapse : collapse; empty-cells : show; border : solid thin black; }
+      #problem-table { cell-spacing : 0px; border-collapse : collapse; empty-cells : show;  }
       #problem-table td {  padding : 0 3px 0 3px; margin : 0px; }
       #problem-table td { white-space : nowrap; }
       #problem-table tr:nth-child(2n+1) {background-color : #e0e0ff; }
+      #problem-table tr:nth-child(2n+1):hover { background-color : #a0a0c0; }
+      #problem-table tr:nth-child(2n):hover   { background-color : #b0b0d0; }
+
+      #problem-table tr td { text-align : right; }
+      #problem-table tr td:nth-child(1) { text-align : left; }
+      #problem-table tr.cone-row td { text-align : left; }
+      #problem-table tr.var-bound-row { background-color : #d0d0d0; }
+
+
+      #variables-table { cell-spacing : 0px; border-collapse : collapse; empty-cells : show; }
+      #variables-table tr td {  padding : 0 3px 0 3px; margin : 5px; }
 
       #variables-table td { margin : 0px; padding : 0 3px 0 3px; }
+
+      .pretty-tab:hover { background : #c0c0ff; }
+      .pretty-tab       { border : solid thin black; padding : 5px; }
+
+      #pretty-misc-table   { border-spacing : 0px; border-collapse : collapse; width : 100%; }
+      #pretty-misc-content { border : solid thin-black; }
+      #pretty-iparam-table { display : none; }
+      #pretty-dparam-table { display : none; }
+      #pretty-sparam-table { display : none; }
+      #pretty-sol-bas      { display : none; }
+      #pretty-sol-itr      { display : none; }
+      #pretty-sol-itg      { display : none; }
 
       body { margin : 10px; }
 
@@ -52,6 +75,17 @@ function readSingleFile(e) {
   reader.readAsArrayBuffer(file);
 }
 
+function prettySelect(which)
+{
+  $('#pretty-iparam-table').toggle(false);
+  $('#pretty-dparam-table').toggle(false);
+  $('#pretty-sparam-table').toggle(false);
+  $('#pretty-sol-bas').toggle(false);
+  $('#pretty-sol-itr').toggle(false);
+  $('#pretty-sol-itg').toggle(false);
+
+  $('#pretty-'+which).toggle(true);
+}
 
 $(document).ready(function () { $('#file-input').change(readSingleFile); });
     </script>
@@ -60,6 +94,35 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
   <body>
     <input type="file" name="Task File" id="file-input" accept=".task" autofocus/>
     <div id="pretty-task">
+      <h1>Task information</h1>
+      <div id="pretty-task-info"> </div>
+
+      <h1>Problem</h1>
+      <div id="pretty-problem"> </div>
+
+      <h2>Variables</h2>
+      <div id="pretty-variables"> </div>
+
+      <h1>Other task data</h1>
+      <table id="pretty-misc-table">
+        <col width="200">
+        <tr><td class="pretty-tab" onclick="prettySelect('iparam-table')">Integer Parameters</td>
+          <td rowspan="10" id="pretty-misc-content">
+            <div id="pretty-iparam-table"> </div>
+            <div id="pretty-dparam-table"> </div>
+            <div id="pretty-sparam-table"> </div>
+            <div id="pretty-sol-bas"> </div>
+            <div id="pretty-sol-itr"> </div>
+            <div id="pretty-sol-itg"> </div>
+          </td>
+        </tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('dparam-table')">Double parameters</td></tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('sparam-table')">String parameters</td></tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('sol-bas')">Basis solution</td></tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('sol-itr')">Interior solution</td></tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('sol-itg')">Integer solution</td></tr>
+        <tr><td height="100%"></td></tr>
+      </table>
     </div>
   </body>
 </html>

@@ -163,10 +163,10 @@ function Table(attrs,hashead,hasfoot)
 
 
 
-
+// rowsubset and colsubset must be sorted
 function renderProblem(tf,element,rowsubset,colsubset)
 {
-    var probtablenumcol = 3+tf.numvar+tf.numbarvar;
+    element.innerHTML = "";
 
     if (typeof rowsubset == 'undefined')
     {
@@ -174,37 +174,99 @@ function renderProblem(tf,element,rowsubset,colsubset)
         for (var i = 0; i < tf.numcon; ++i) rowsubset[i] = i;
     }
 
+    if (typeof colsubset == 'undefined')
+    {
+        colsubset = new Int32Array(tf.numvar+tf.numbarvar);
+        for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) colsubset[i] = i;
+    }
+
+    var probtablenumcol = 3+colsubset.length;
+    var probtablenumrow = 6+rowsubset.length+tf.numcone;
+
     var table = new Table({ "id" : "problem-table" },true,true);
     element.appendChild(table.node);
 
     table.addhead(); table.addhead();
-    for (var i = 0; i < tf.numvar;    ++i) table.addhead({"id" : "var-"+i},tf.varnames[i]);
-    for (var i = 0; i < tf.numbarvar; ++i) table.addhead({"id" : "var-"+(i+tf.numvar)},tf.barvarnames[i]);
+    var prev = -1;
+    for (var i = 0; i < colsubset.length;    ++i)
+    {
+        if (colsubset[i] > prev+1) table.addhead({"class" : "skip-marker" },"");
+        table.addhead({"id" : "var-"+colsubset[i]}, colsubset[i] < tf.numvar ? tf.varnames[colsubset[i]] : tf.barvarnames[colsubset[i]-tf.numvar] );
+        prev = colsubset[i];
+    }
+    if (prev < tf.numvar+tf.numcon-1) table.addhead();
     table.addhead();
+
+    table.addrow({ "style" : "display : none;"});
+    
+    var tr = table.addrow(); tr.addcells(2);
+    prev = -1;
+    for (var i = 0; i < colsubset.length;    ++i)
+    {
+        if (colsubset[i] > prev+1)
+        {
+            var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow+2,"style" : "vertical-align : top; width : 16px;" },"");
+            var div = document.createElement('div');
+            div.setAttribute("style","transform : rotate(90deg); transform-origin : top left 0; height : 16px; width : 16px;");
+            div.innerHTML = "... " + (colsubset[i] - prev) + " hidden columns";
+            td.node.appendChild(div)
+        }
+        tr.addcell();
+        prev = colsubset[i];
+    }
+    if (prev < tf.numvar+tf.numcon-1)
+    {
+        var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow+2,"style" : "vertical-align : top; width : 16px;" },"");
+        var div = document.createElement('div');
+        div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
+        div.innerHTML = "... " + (tf.numvar+tf.numcon-1 - prev) + " hidden columns";
+        td.node.appendChild(div)
+
+    }
+    table.addhead();
+
+
 
     var tr = table.addrow();
     tr.addcell({"class" : "obj-sense"},(tf.objsense == "MIN" ? "Minimize" : "Maximize"))
     tr.addcell();
-    var cols = tr.addcells(tf.numvar+tf.numbarvar);
+    var cols = tr.addcells(colsubset.length);
     tr.addcell();
 
-    if (tf.c != null)
-        for (var i = 0; i < tf.c.length; ++i)
-            cols[i].node.innerHTML = fmtlinelm(tf.c[i],tf.varnames[i]);
+
+
+    var i = 0;
+    if (tf.c == null)
+        while (i < colsubset.length && colsubset[i] < tf.numvar) ++i;
+    else
+    {
+        while (i < colsubset.length && colsubset[i] < tf.numvar)
+        {
+            cols[colsubset[i]].node.innerHTML = fmtlinelm(tf.c[colsubset[i]],tf.varnames[colsubset[i]]);
+            ++i;
+        }
+    }
 
     if (tf.barcsparsity != null)
     {
-        for (var k = 0; k < tf.barcsparsity.length; ++k)
+        var k = 0;
+        while (i < colsubset.length && k < tf.barcsparsity.length)
         {
-            var sub = tf.barcsparsity[k];
-            var pb  = tf.barcalpha.ptrb[k];
-            var pe  = tf.barcalpha.ptrb[k+1];
+            if      (tf.barcsparsity[k] < colsubset[i] - tf.numvar) ++k;
+            else if (tf.barcsparsity[k] > colsubset[i] - tf.numvar) ++i;
+            else
+            {
+                var sub = tf.barcsparsity[k];
+                var pb  = tf.barcalpha.ptrb[k];
+                var pe  = tf.barcalpha.ptrb[k+1];
 
-            cols[sub+tf.numvar].innerHTML = fmtbarelm(tf.barcalpha.valij,
-                                                      tf.barcalpha.subj,
-                                                      pb,pe,
-                                                      tf.barvarnames[sub],
-                                                      tf.barvardim[sub]);
+                cols[sub+tf.numvar].innerHTML = fmtbarelm(tf.barcalpha.valij,
+                                                          tf.barcalpha.subj,
+                                                          pb,pe,
+                                                          tf.barvarnames[sub],
+                                                          tf.barvardim[sub]);
+                ++i; ++k;
+            }
         }
     }
 
@@ -215,18 +277,21 @@ function renderProblem(tf,element,rowsubset,colsubset)
             ++baraptrb[tf.barasparsity.subi[i]+1];
         for (var i = 0; i < tf.barasparsity.nnz; ++i)
             baraptrb[i+1] += baraptrb[i];
-    }
+   }
 
     var prev = -1;
     for (var ii = 0; ii < rowsubset.length; ++ii)
     {
         var i = rowsubset[ii];
 
-        if (prev < i - 1) // skipped rows, insert a marker
+        //------- skipped rows, insert a marker
+        if (prev < i - 1) 
         {
-            table.addrow().addcell({"colspan" : probtablenumcol, "style" : "background-color : #ffd0d0;"},"... "+(i-1-prev)+" hidden rows");
-            table.addrow({"display" : "none"}).addcell({"colspan" : probtablenumcol});
+            table.addrow().addcell({"colspan" : probtablenumcol+1, "style" : "background-color : #ffd0d0;"},"... "+(i-1-prev)+" hidden rows");
+            table.addrow({"display" : "none"}).addcell({"colspan" : probtablenumcol+1});
         }
+        //-------------------------------------
+
 
         var  tr = table.addrow();
         tr.addcell({},"<span  class=\"con-name\">"+tf.connames[i]+"</span>");
@@ -238,32 +303,47 @@ function renderProblem(tf,element,rowsubset,colsubset)
         else
             tr.addcell({"class" : "con-lb"});
 
-        var cols = tr.addcells(tf.numvar+tf.numbarvar);
+        var cols = tr.addcells(probtablenumcol-3);
 
+        var l = 0;
         if (tf.A != null)
         {
-            for (var k = tf.A.ptrb[i]; k < tf.A.ptrb[i+1]; ++k)
+            var k = tf.A.ptrb[i];
+            while ( k < tf.A.ptrb[i+1] && l < colsubset.length)
             {
-                var sub = tf.A.subj[k];
-                cols[sub].node.innerHTML = fmtlinelm(tf.A.valij[k], tf.varnames[sub]);
+                if      (colsubset[l] < tf.A.subj[k]) ++l;
+                else if (colsubset[l] > tf.A.subj[k]) ++k;
+                else
+                {
+                    cols[l].node.innerHTML = fmtlinelm(tf.A.valij[k], tf.varnames[tf.A.subj[k]]);
+                    ++l; ++k;
+                }
             }
         }
 
         if (tf.barasparsity != null)
         {
-            for (var k = baraptrb[i]; k < baraptrb[i+1]; ++k)
+            var k = baraptrb[i];
+            while (k < baraptrb[i+1] && l < colsubset.length)
             {
-                var sub = tf.barasparsity.subj[k];
-                var pb  = tf.baraalpha.ptrb[k];
-                var pe  = tf.baraalpha.ptrb[k+1];
+                if      (tf.barasparsity.subj[k] < colsubset[l]-tf.numvar) ++k;
+                else if (tf.barasparsity.subj[k] > colsubset[l]-tf.numvar) ++l;
+                else
+                {
+                    var sub = tf.barasparsity.subj[k];
+                    var pb  = tf.baraalpha.ptrb[k];
+                    var pe  = tf.baraalpha.ptrb[k+1];
 
-                cols[tf.numvar+sub].node.innerHTML = fmtbarelm(tf.baraalpha.valij,
-                                                               tf.baraalpha.subj,
-                                                               pb,pe,
-                                                               tf.barvarnames[sub],
-                                                               tf.barvardim[sub]);
+                    cols[l].node.innerHTML = fmtbarelm(tf.baraalpha.valij,
+                                                       tf.baraalpha.subj,
+                                                       pb,pe,
+                                                       tf.barvarnames[sub],
+                                                       tf.barvardim[sub]);
+                    ++l; ++k;
+                }
             }
         }
+
 
         if (bk == MSK_BK_UP ||
             bk == MSK_BK_RA )
@@ -274,12 +354,14 @@ function renderProblem(tf,element,rowsubset,colsubset)
             tr.addcell({"class" : "con-ub"});
         prev = i;
     }
-
+ 
+    //------- skipped rows, insert a marker
     if (prev < tf.numcon-1) // skipped rows, insert a marker
     {
-        table.addrow().addcell({"colspan" : probtablenumcol, "style" : "background-color : #ffd0d0;"},"... "+(tf.numcon-1-prev)+" hidden rows");
+        table.addrow().addcell({"colspan" : probtablenumcol, "class" : "skip-marker"},"... "+(tf.numcon-1-prev)+" hidden rows");
         table.addrow({"display" : "none"}).addcell({"colspan" : probtablenumcol});
     }
+    //-------------------------------------
 
 
     // cones
@@ -314,59 +396,61 @@ function renderProblem(tf,element,rowsubset,colsubset)
 
     var tr = table.addrow({"class":"var-bound-row"});
     tr.addcell(undefined,"Lower"); tr.addcell();
-    var lbcells = tr.addcells(tf.numvar+tf.numcon);
+    var lbcells = tr.addcells(colsubset.length);
     tr.addcell()
 
     var tr = table.addrow({"class":"var-bound-row"});
     tr.addcell(undefined,"Upper"); tr.addcell();
-    var ubcells = tr.addcells(tf.numvar+tf.numcon);
+    var ubcells = tr.addcells(colsubset.length);
     tr.addcell()
 
     var tr = table.addrow({"class":"var-bound-row"});
     tr.addcell(); tr.addcell();
-    var tpcells = tr.addcells(tf.numvar+tf.numcon);
+    var tpcells = tr.addcells(colsubset.length);
     tr.addcell()
 
-    for (var i = 0; i < tf.numvar; ++i)
+    var ii = 0;
+    for (; ii < colsubset.length && colsubset[ii] < tf.numvar ; ++ii)
     {
-        if (vartypes[i] > 0) tpcells[i].node.innerHTML = 'int';
+        var u = colsubset[ii];
+        if (vartypes[ii] > 0) tpcells[i].node.innerHTML = 'int';
 
         if      (tf.varbk[i] == MSK_BK_FX)
             lbcells[i].node.innerHTML = "= "+tf.varbound[i];
 
         else if (tf.varbk[i] == MSK_BK_FR)
         {
-            lbcells[i].node.innerHTML = "-&infin;";
-            ubcells[i].node.innerHTML = "&infin;";
+            lbcells[ii].node.innerHTML = "-&infin;";
+            ubcells[ii].node.innerHTML = "&infin;";
         }
         else if (tf.varbk[i] == MSK_BK_UP)
         {
-            lbcells[i].node.innerHTML = "-&infin;";
-            ubcells[i].node.innerHTML = tf.varbound[tf.numvar+i];
+            lbcells[ii].node.innerHTML = "-&infin;";
+            ubcells[ii].node.innerHTML = tf.varbound[tf.numvar+i];
         }
         else if (tf.varbk[i] == MSK_BK_LO)
         {
-            lbcells[i].node.innerHTML =  tf.varbound[i];
-            ubcells[i].node.innerHTML = "&infin;"
+            lbcells[ii].node.innerHTML =  tf.varbound[i];
+            ubcells[ii].node.innerHTML = "&infin;"
         }
         else if (tf.varbk[i] == MSK_BK_RA)
         {
-            lbcells[i].node.innerHTML = tf.varbound[i];
-            ubcells[i].node.innerHTML = tf.varbound[tf.numvar+i];
+            lbcells[ii].node.innerHTML = tf.varbound[i];
+            ubcells[ii].node.innerHTML = tf.varbound[tf.numvar+i];
         }
     }
 
-    for (var i = 0; i < tf.numbarvar; ++i)
+    for (; ii < colsubset.length; ++ii)
     {
-        tpcells[i+tf.numvar].node.innerHTML = "PSD("+tf.barvardim[i]+")";
+        var i = colsubset[ii];
+        tpcells[ii].node.innerHTML = "PSD("+tf.barvardim[i]+")";
     }
-}
+} /* renderProblem */
 
 
 
 var global_con_subset    = undefined;
 var global_var_subset    = undefined;
-var global_barvar_subset = undefined;
 var global_cone_subset   = undefined;
 
 
@@ -375,6 +459,7 @@ function pptask(data,element)
     var tf = new TaskFile(data);
 
     var element = document.getElementById("pretty-task-info");
+    element.innerHTML = "";
     var table =  new Table({ 'id' : "info-table" });
     element.appendChild(table.node);
 
@@ -387,18 +472,38 @@ function pptask(data,element)
     var tr = table.addrow({}); tr.addcell({},"A non-zeros"); tr.addcell({},""+tf.numanz);
 
     var element = document.getElementById("pretty-problem");
-
+    element.innerHTML = "";
     var div = document.createElement("div");
     div.setAttribute("id","div-problem-table");
     element.appendChild(div);
 
-    renderProblem(tf,div);
+    if (tf.numcon > 40)
+    {
+        global_con_subset = new Int32Array(40);
+        for (var i = 0; i < 100; ++i)
+            global_con_subset[i] = i;
+    }
 
+    if (tf.numvar > 20)
+    {
+        global_var_subset = new Int32Array(20);
+        for (var i = 0; i < 100; ++i)
+            global_var_subset[i] = i;
+    }
 
+    if (tf.numcone > 20)
+    {
+        global_var_subset = new Int32Array(20);
+        for (var i = 0; i < 100; ++i)
+            global_var_subset[i] = i;
+    }
+
+    renderProblem(tf,div, global_con_subset, global_var_subset);
 
     if (tf.integerparameters != null)
     {
         div = document.getElementById("pretty-iparam-table");
+        div.innerHTML = "";
 
         var table = new Table({ "class" : "parameter-table" });
         div.appendChild(table.node);
@@ -414,6 +519,7 @@ function pptask(data,element)
     if (tf.doubleparameters != null)
     {
         div = document.getElementById("pretty-dparam-table");
+        div.innerHTML = "";
 
         var table = new Table({ "class" : "parameter-table" });
         div.appendChild(table.node);
@@ -430,6 +536,7 @@ function pptask(data,element)
     if (tf.stringparameters != null)
     {
         div = document.getElementById("pretty-sparam-table");
+        div.innerHTML = "";
 
         var table = new Table({ "class" : "parameter-table" });
         div.setAttribute("class","hidden");

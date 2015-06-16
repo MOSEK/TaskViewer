@@ -159,8 +159,162 @@ function Table(attrs,hashead,hasfoot)
 
 
 
+function getCurrentVarSelection(tf)
+{
+    var colsubset_len = 0;
+    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) ++colsubset_len; }
+    var colsubset = new Int32Array(colsubset_len);
+    var idx = 0;
+    for (var i = 0; i < tf.numbarvar+tf.numvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) { colsubset[idx] = i; ++idx; } }
+    return colsubset;
+}
+
+function getCurrentConSelection(tf)
+{
+    var rowsubset_len = 0;
+    for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) ++rowsubset_len; }
+    var rowsubset = new Int32Array(rowsubset_len);
+    var idx = 0;
+    for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) { rowsubset[idx] = i; ++idx; } }
+    return rowsubset;
+}
+
+function renderSolution(tf,elt)
+{
+    elt.innerHTML = "";
+    if (tf.solbas == null &&
+        tf.solitr == null &&
+        tf.solitg == null)
+    {
+        elt.innerHTML = "No solutions available";
+        return;
+    }
+
+    var table = new Table({"class" : "solution-table"});
+    elt.appendChild(table.node);
+
+    colsubset = getCurrentVarSelection(tf);
+    rowsubset = getCurrentConSelection(tf);
+
+    console.log("sol bas",tf.solbas);
+
+    var tr = table.addrow({"class" : "header"});
+    tr.addcell({"class" : "medium-border-right-cell"})
+    tr.addcell({"colspan" : "4", "class" : "medium-border-right-cell"},"Basic")
+    tr.addcell({"colspan" : "5", "class" : "medium-border-right-cell"},"Interior")
+    tr.addcell({"colspan" : "2"},"Integer")
+
+    var tr = table.addrow({"class" : "header"});
+    // name
+    tr.addcell({"class" : "medium-border-right-cell"})
+    // basic
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xx");
+    tr.addcell(undefined,"slx");
+    tr.addcell({"class" : "medium-border-right-cell"},"sux");
+    // interior
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xx");
+    tr.addcell(undefined,"slx");
+    tr.addcell(undefined,"sux");
+    tr.addcell({"class" : "medium-border-right-cell"},"snx");
+    // integer
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xx");
+
+    for (var i = 0; i < colsubset.length; ++i)
+        if (colsubset[i] < tf.numvar)
+    {
+        var tr = table.addrow({ 'class' : 'sol-row' });
+        var ii = colsubset[i];
+        tr.addcell(undefined,tf.varnames[ii]);
+        if (tf.solbas != null)
+        {
+            tr.addcell(undefined,tf.solbas.skx[ii]);
+            tr.addcell(undefined,tf.solbas.xx[ii]);
+            tr.addcell(undefined,tf.solbas.slx[ii]);
+            tr.addcell(undefined,tf.solbas.sux[ii]);
+        }
+        else
+            tr.addcells(4);
+
+        if (tf.solitr != null)
+        {
+            tr.addcell(undefined,tf.solitr.skx[ii]);
+            tr.addcell(undefined,tf.solitr.xx[ii]);
+            tr.addcell(undefined,tf.solitr.slx[ii]);
+            tr.addcell(undefined,tf.solitr.sux[ii]);
+            tr.addcell(undefined,tf.solitr.snx[ii]);
+        }
+        else
+            tr.addcells(5);
+
+        if (tf.solitg != null)
+        {
+            tr.addcell(undefined,tf.solitg.skx[ii]);
+            tr.addcell(undefined,tf.solitg.xx[ii]);
+        }
+        else
+            tr.addcells(2);
+    }
+
+    var tr = table.addrow({"class" : "header"});
+    // name
+    tr.addcell({"class" : "medium-border-right-cell"})
+    // basic
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xc");
+    tr.addcell(undefined,"slc");
+    tr.addcell({"class" : "medium-border-right-cell"},"suc");
+    // interior
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xc");
+    tr.addcell(undefined,"slc");
+    tr.addcell(undefined,"suc");
+    tr.addcell({"class" : "medium-border-right-cell"},"y ");
+    // integer
+    tr.addcell(undefined,"status");
+    tr.addcell(undefined,"xc");
 
 
+    for (var i = 0; i < rowsubset.length; ++i)
+    {
+        var tr = table.addrow({ 'class' : 'sol-row' });
+        var ii = rowsubset[i];
+        tr.addcell(undefined,tf.connames[ii]);
+
+        if (tf.solbas != null)
+        {
+            tr.addcell(undefined,tf.solbas.skc[ii]);
+            tr.addcell(undefined,tf.solbas.xc[ii]);
+            tr.addcell(undefined,tf.solbas.slc[ii]);
+            tr.addcell(undefined,tf.solbas.suc[ii]);
+            tr.addcell(undefined,tf.solitr.y[ii]);
+        }
+        else
+            tr.addcells(4);
+
+        if (tf.solitr != null)
+        {
+            tr.addcell(undefined,tf.solitr.skc[ii]);
+            tr.addcell(undefined,tf.solitr.xc[ii]);
+            tr.addcell(undefined,tf.solitr.slc[ii]);
+            tr.addcell(undefined,tf.solitr.suc[ii]);
+            tr.addcell(undefined,tf.solitr.y[ii]);
+        }
+        else
+            tr.addcells(5);
+
+        if (tf.solitg != null)
+        {
+            tr.addcell(undefined,tf.solitg.skc[ii]);
+            tr.addcell(undefined,tf.solitg.xc[ii]);
+        }
+        else
+            tr.addcells(2);
+    }
+
+}
 
 
 // rowsubset and colsubset must be sorted
@@ -168,14 +322,8 @@ function renderProblem(tf,element)
 {
     element.innerHTML = "";
 
-    console.log("Rerender!");
-
-    // Rebuild subset lists
-    var colsubset_len = 0;
-    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) ++colsubset_len; }
-    var colsubset = new Int32Array(colsubset_len);
-    var idx = 0;
-    for (var i = 0; i < tf.numbarvar+tf.numvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) { colsubset[idx] = i; ++idx; } }
+    colsubset = getCurrentVarSelection(tf);
+    rowsubset = getCurrentConSelection(tf);
 
     var rowsubset_len = 0;
     for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) ++rowsubset_len; }
@@ -447,7 +595,6 @@ function renderProblem(tf,element)
     for (; ii < colsubset.length; ++ii)
     {
         var i = colsubset[ii];
-        console.log(ii,i,tf.barvardim)
         tpcells[ii].node.innerHTML = "PSD("+tf.barvardim[i-tf.numvar]+")";
     }
 } /* renderProblem */
@@ -531,7 +678,6 @@ function renderConSelectBox(tf,element,consubset)
         for (var i = 0; i < tf.numcon; ++i)
             document.getElementById('check-con-'+i).checked = true;
 }
-
 
 function setAllCons(tf,v)
 {
@@ -646,19 +792,21 @@ function pptask(data,element)
     element.appendChild(div);
 
     renderProblem(tf,div);
+    renderSolution(tf,document.getElementById("pretty-solution"))
+
 
     $("#pretty-select-all-vars-button").click(function () { setAllVars(tf,true)});
     $("#pretty-deselect-all-vars-button").click(function () { setAllVars(tf,false)});
     $("#select-vars-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-vars-regex").val(),true)});
     $("#pretty-select-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),true)});
     $("#pretty-deselect-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),false)});
-    $("#pretty-refresh-problem-button").click(function () { console.log("refresh"); renderProblem(tf,div); });
+    $("#pretty-refresh-problem-button").click(function () { renderProblem(tf,div); });
 
     $("#pretty-select-all-cons-button").click(function () { setAllCons(tf,true)});
     $("#pretty-deselect-all-cons-button").click(function () { setAllCons(tf,false)});
     $("#select-cons-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-cons-regex").val(),true)});
     $("#pretty-select-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),true)});
     $("#pretty-deselect-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),false)});
-    $("#pretty-refresh-problem-button").click(function () { console.log("refresh"); renderProblem(tf,div); });
+    $("#pretty-refresh-problem-button").click(function () { renderProblem(tf,div); });
 
 }

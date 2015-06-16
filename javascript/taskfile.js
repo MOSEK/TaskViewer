@@ -51,6 +51,26 @@ datasize[TP_INT32]   = 4;
 datasize[TP_INT64]   = 8;
 datasize[TP_FLOAT64] = 8;
 
+
+function Solution(status)
+{
+    this.status = status;
+    this.skx    = null;    
+    this.xx     = null;
+    this.slx    = null;
+    this.sux    = null;
+    this.snx    = null;
+    this.skc    = null;
+    this.xc     = null;
+    this.y      = null;
+    this.slc    = null;
+    this.suc    = null;
+    this.skn    = null;
+    this.barx   = null;
+    this.bars   = null;
+}
+
+
 function transpose(m)
 {
     if (m.type == 'packed')
@@ -233,9 +253,16 @@ function TaskFile(data)
     this.baraalpha = null;
     this.barasparsity = null;
 
+
     this.qconetype = null;
     this.qconesub  = null;
-    
+
+    // solutions
+    this.solbas = null;
+    this.solitr = null;
+    this.solitg = null;
+
+    // parameters
     this.stringparameters  = null;
     this.integerparameters = null;
     this.doubleparameers   = null;
@@ -407,6 +434,41 @@ function TaskFile(data)
                 }
             }
             this.doubleparameters = keyval;
+        }
+        //--------------------------------
+        //-- Solutions -------------------
+        else if (this.tf.curentry_name == 'Task/solution/basic/status')
+            this.solbas = new Solution();
+        else if (this.tf.curentry_name == 'Task/solution/interior/status')
+            this.solitr = new Solution();
+        else if (this.tf.curentry_name == 'Task/solution/integer/status')
+            this.solitg = new Solution();
+        else if (this.tf.curentry_name.match('Task/solution') != null)
+        {
+            var p = this.tf.curentry_name.split('/');
+            var whichsol = p[2];
+            var whichitem = p[3];
+
+            var sol = ( whichsol == "basic" ? this.solbas :
+                        ( whichsol == 'interior' ? this.solitr :
+                          solitg ));
+
+            if (whichitem == "skx" ||
+                whichitem == "xx"  ||
+                whichitem == "slx" ||
+                whichitem == "sux" ||
+                whichitem == "xc"  ||
+                whichitem == "y"   ||
+                whichitem == "skc" ||
+                whichitem == "slc" ||
+                whichitem == "suc" ||
+                whichitem == "snx" ||
+                whichitem == "skn" )
+                sol[whichitem] = parsematrix(this.tf.curentry_data).data;
+            else if ( whichitem == "barx" || 
+                      whichitem == "bars" )
+            {
+            }
         }
     }
 

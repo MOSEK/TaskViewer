@@ -54,6 +54,9 @@
       #pretty-sol-itr      { display : none; }
       #pretty-sol-itg      { display : none; }
 
+      .pretty-button  { border-radius : 5px; border : solid thin black; background : #808080; color : #e0e0e0; padding : 3px; display : inline-block; }
+      .pretty-button-frame { border-radius : 5px; border : solid thin black; padding : 3px; display : inline-block; }
+
       body { margin : 10px; }
 
       .hidden { display : none; }
@@ -99,6 +102,41 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
       <div id="pretty-task-info"> </div>
 
       <h1>Problem</h1>
+      <div>
+        <div class="pretty-button" onclick="$('#pretty-advanced-select').toggle()">Toggle advanced selection</div>
+      </div>
+      <div id="pretty-advanced-select" style="display:none; border : solid thin black; padding:  5px;">
+        <h3>Variables</h3>
+        <div id="pretty-select-variables">
+          <div>
+            <div class="pretty-button" id="pretty-select-all-vars-button">Select all</div>
+            <div class="pretty-button" id="pretty-deselect-all-vars-button">Deselect all</div>
+            <div class="pretty-button-frame">
+              <input type="text" id="select-vars-regex" title="Enter a regular expression to match names">
+              <div class="pretty-button" id="pretty-select-regex-vars-button">Select</div>
+              <div class="pretty-button" id="pretty-deselect-regex-vars-button">Deselect</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Constraints</h3>
+        <div id="pretty-select-constraints">
+          <div>
+            <div class="pretty-button" id="pretty-select-all-cons-button">Select all</div>
+            <div class="pretty-button" id="pretty-deselect-all-cons-button">Deselect all</div>
+            <div class="pretty-button-frame">
+              <input type="text" id="select-cons-regex" title="Enter a regular expression to match names">
+              <div class="pretty-button" id="pretty-select-regex-cons-button">Select</div>
+              <div class="pretty-button" id="pretty-deselect-regex-cons-button">Deselect</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Cones</h3>
+        <div id="pretty-select-cones"></div>
+        
+        <div class="pretty-button" id="pretty-refresh-problem-button">Refresh problem</div>
+      </div>
       <div id="pretty-problem"> </div>
 
       <h2>Variables</h2>

@@ -164,21 +164,25 @@ function Table(attrs,hashead,hasfoot)
 
 
 // rowsubset and colsubset must be sorted
-function renderProblem(tf,element,rowsubset,colsubset)
+function renderProblem(tf,element)
 {
     element.innerHTML = "";
 
-    if (typeof rowsubset == 'undefined')
-    {
-        rowsubset = new Int32Array(tf.numcon);
-        for (var i = 0; i < tf.numcon; ++i) rowsubset[i] = i;
-    }
+    console.log("Rerender!");
 
-    if (typeof colsubset == 'undefined')
-    {
-        colsubset = new Int32Array(tf.numvar+tf.numbarvar);
-        for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) colsubset[i] = i;
-    }
+    // Rebuild subset lists
+    var colsubset_len = 0;
+    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) ++colsubset_len; }
+    var colsubset = new Int32Array(colsubset_len);
+    var idx = 0;
+    for (var i = 0; i < tf.numbarvar+tf.numvar; ++i) { var e = document.getElementById("check-var-"+i); if (e.checked) { colsubset[idx] = i; ++idx; } }
+
+    var rowsubset_len = 0;
+    for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) ++rowsubset_len; }
+    var rowsubset = new Int32Array(rowsubset_len);
+    var idx = 0;
+    for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) { rowsubset[idx] = i; ++idx; } }
+    // --------------------
 
     var probtablenumcol = 3+colsubset.length;
     var probtablenumrow = 6+rowsubset.length+tf.numcone;
@@ -198,7 +202,7 @@ function renderProblem(tf,element,rowsubset,colsubset)
     table.addhead();
 
     table.addrow({ "style" : "display : none;"});
-    
+
     var tr = table.addrow(); tr.addcells(2);
     prev = -1;
     for (var i = 0; i < colsubset.length;    ++i)
@@ -443,15 +447,100 @@ function renderProblem(tf,element,rowsubset,colsubset)
     for (; ii < colsubset.length; ++ii)
     {
         var i = colsubset[ii];
-        tpcells[ii].node.innerHTML = "PSD("+tf.barvardim[i]+")";
+        console.log(ii,i,tf.barvardim)
+        tpcells[ii].node.innerHTML = "PSD("+tf.barvardim[i-tf.numvar]+")";
     }
 } /* renderProblem */
 
+function renderVarSelectBox(tf,element,varsubset)
+{
+    var table = new Table();
+    element.appendChild(table.node);
+    var cellsperrow = 15;
+    var i = 0;
+    while (i < tf.numvar)
+    {
+        var tr = table.addrow();
+        var cells = tr.addcells(cellsperrow);
+        for (var j = 0; j < cellsperrow && i+j < tf.numvar; ++j)
+        {
+            cells[j].node.innerHTML = "<input type='checkbox' id='check-var-"+(i+j)+"'> " + tf.varnames[i+j];
+        }
+        i += 15;
+    }
+    i = 0;
+    while (i < tf.numbarvar)
+    {
+        var tr = table.addrow();
+        var cells = tr.addcells(cellsperrow);
+        for (var j = 0; j < cellsperrow && i+j < tf.numbarvar; ++j)
+        {
+            cells[j].node.innerHTML = "<input type='checkbox' id='check-var-"+(i+j+tf.numvar)+"'> " + tf.barvarnames[i+j];
+        }
+        i += 15;
+    }
+
+    if (typeof varsubset != 'undefined')
+        for (var i = 0; i < varsubset.length; ++i)
+            document.getElementById('check-var-'+varsubset[i]).checked = true;
+    else
+        for (var i = 0; i < tf.numvar+tf.numbarvar; ++i)
+            document.getElementById('check-var-'+i).checked = true;
+}
+
+function setAllVars(tf,v)
+{
+    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) document.getElementById("check-var-"+i).checked = v;
+}
+
+function setRegexVars(tf,regex,v)
+{
+    for (var i = 0; i < tf.numvar; ++i)
+        if (tf.varnames[i].match(regex) != null)
+            document.getElementById("check-var-"+i).checked = v;
+    for (var i = 0; i < tf.numbarvar; ++i)
+        if (tf.barvarnames[i].match(regex) != null)
+            document.getElementById("check-var-"+(i+tf.numvar)).checked = v;
+}
 
 
-var global_con_subset    = undefined;
-var global_var_subset    = undefined;
-var global_cone_subset   = undefined;
+function renderConSelectBox(tf,element,consubset)
+{
+    var table = new Table();
+    element.appendChild(table.node);
+    var cellsperrow = 15;
+    var i = 0;
+    while (i < tf.numcon)
+    {
+        var tr = table.addrow();
+        var cells = tr.addcells(cellsperrow);
+        for (var j = 0; j < cellsperrow && i+j < tf.numcon; ++j)
+        {
+            cells[j].node.innerHTML = "<input type='checkbox' id='check-con-"+(i+j)+"'> " + tf.connames[i+j];
+        }
+        i += 15;
+    }
+
+    if (typeof consubset != 'undefined')
+        for (var i = 0; i < consubset.length; ++i)
+            document.getElementById('check-con-'+consubset[i]).checked = true;
+    else
+        for (var i = 0; i < tf.numcon; ++i)
+            document.getElementById('check-con-'+i).checked = true;
+}
+
+
+function setAllCons(tf,v)
+{
+    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) document.getElementById("check-con-"+i).checked = v;
+}
+
+function setRegexCons(tf,regex,v)
+{
+    for (var i = 0; i < tf.numvar; ++i)
+        if (tf.connames[i].match(regex) != null)
+            document.getElementById("check-con-"+i).checked = v;
+}
 
 
 function pptask(data,element)
@@ -471,34 +560,30 @@ function pptask(data,element)
     var tr = table.addrow({}); tr.addcell({},"PSD Variables"); tr.addcell({},""+tf.numbarvar);
     var tr = table.addrow({}); tr.addcell({},"A non-zeros"); tr.addcell({},""+tf.numanz);
 
-    var element = document.getElementById("pretty-problem");
-    element.innerHTML = "";
-    var div = document.createElement("div");
-    div.setAttribute("id","div-problem-table");
-    element.appendChild(div);
-
     if (tf.numcon > 40)
     {
-        global_con_subset = new Int32Array(40);
+        var con_subset = new Int32Array(40);
         for (var i = 0; i < 100; ++i)
-            global_con_subset[i] = i;
+            con_subset[i] = i;
     }
 
     if (tf.numvar > 20)
     {
-        global_var_subset = new Int32Array(20);
+        var var_subset = new Int32Array(20);
         for (var i = 0; i < 100; ++i)
-            global_var_subset[i] = i;
+            var_subset[i] = i;
     }
 
     if (tf.numcone > 20)
     {
-        global_var_subset = new Int32Array(20);
+        var cone_subset = new Int32Array(20);
         for (var i = 0; i < 100; ++i)
-            global_var_subset[i] = i;
+            cone_subset[i] = i;
     }
 
-    renderProblem(tf,div, global_con_subset, global_var_subset);
+    renderVarSelectBox(tf,document.getElementById("pretty-select-variables"),var_subset);
+    renderConSelectBox(tf,document.getElementById("pretty-select-constraints"),con_subset);
+
 
     if (tf.integerparameters != null)
     {
@@ -550,5 +635,28 @@ function pptask(data,element)
             tr.addcell({},item[1]);
         }
     }
+
+    var element = document.getElementById("pretty-problem");
+    element.innerHTML = "";
+    var div = document.createElement("div");
+    div.setAttribute("id","div-problem-table");
+    element.appendChild(div);
+
+    renderProblem(tf,div);
+
+    $("#pretty-select-all-vars-button").click(function () { setAllVars(tf,true)});
+    $("#pretty-deselect-all-vars-button").click(function () { setAllVars(tf,false)});
+    $("#select-vars-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-vars-regex").val(),true)});
+    $("#pretty-select-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),true)});
+    $("#pretty-deselect-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),false)});
+    $("#pretty-refresh-problem-button").click(function () { console.log("refresh"); renderProblem(tf,div); });
+
+    $("#pretty-select-all-cons-button").click(function () { setAllCons(tf,true)});
+    $("#pretty-deselect-all-cons-button").click(function () { setAllCons(tf,false)});
+    $("#select-cons-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-cons-regex").val(),true)});
+    $("#pretty-select-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),true)});
+    $("#pretty-deselect-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),false)});
+    $("#pretty-refresh-problem-button").click(function () { console.log("refresh"); renderProblem(tf,div); });
+
 }
 

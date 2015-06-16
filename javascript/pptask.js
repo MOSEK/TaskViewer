@@ -179,6 +179,17 @@ function getCurrentConSelection(tf)
     return rowsubset;
 }
 
+function solkey_to_str(v)
+{
+    return ( v == 98 ? "BAS" : 
+             ( v == 115 ? "SUPBAS" :
+               ( v == 108 ? "LOW" : 
+                 ( v == 117 ? "UP" :
+                   ( v == 120 ? "FX" :
+                     ( v == 42 ? "INF" :
+                       "UNK" ) ) ) ) ) );
+}
+
 function renderSolution(tf,elt)
 {
     elt.innerHTML = "";
@@ -230,7 +241,7 @@ function renderSolution(tf,elt)
         tr.addcell(undefined,tf.varnames[ii]);
         if (tf.solbas != null)
         {
-            tr.addcell(undefined,tf.solbas.skx[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solbas.skx[ii]));
             tr.addcell(undefined,tf.solbas.xx[ii]);
             tr.addcell(undefined,tf.solbas.slx[ii]);
             tr.addcell(undefined,tf.solbas.sux[ii]);
@@ -240,7 +251,7 @@ function renderSolution(tf,elt)
 
         if (tf.solitr != null)
         {
-            tr.addcell(undefined,tf.solitr.skx[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solitr.skx[ii]));
             tr.addcell(undefined,tf.solitr.xx[ii]);
             tr.addcell(undefined,tf.solitr.slx[ii]);
             tr.addcell(undefined,tf.solitr.sux[ii]);
@@ -251,7 +262,7 @@ function renderSolution(tf,elt)
 
         if (tf.solitg != null)
         {
-            tr.addcell(undefined,tf.solitg.skx[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solitg.skx[ii]));
             tr.addcell(undefined,tf.solitg.xx[ii]);
         }
         else
@@ -285,7 +296,7 @@ function renderSolution(tf,elt)
 
         if (tf.solbas != null)
         {
-            tr.addcell(undefined,tf.solbas.skc[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solbas.skc[ii]));
             tr.addcell(undefined,tf.solbas.xc[ii]);
             tr.addcell(undefined,tf.solbas.slc[ii]);
             tr.addcell(undefined,tf.solbas.suc[ii]);
@@ -296,7 +307,7 @@ function renderSolution(tf,elt)
 
         if (tf.solitr != null)
         {
-            tr.addcell(undefined,tf.solitr.skc[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solitr.skc[ii]));
             tr.addcell(undefined,tf.solitr.xc[ii]);
             tr.addcell(undefined,tf.solitr.slc[ii]);
             tr.addcell(undefined,tf.solitr.suc[ii]);
@@ -307,7 +318,7 @@ function renderSolution(tf,elt)
 
         if (tf.solitg != null)
         {
-            tr.addcell(undefined,tf.solitg.skc[ii]);
+            tr.addcell(undefined,solkey_to_str(tf.solitg.skc[ii]));
             tr.addcell(undefined,tf.solitg.xc[ii]);
         }
         else
@@ -691,6 +702,12 @@ function setRegexCons(tf,regex,v)
             document.getElementById("check-con-"+i).checked = v;
 }
 
+function rerender(tf)
+{
+    renderProblem(tf,document.getElementById("div-problem-table"));
+    renderSolution(tf,document.getElementById("pretty-solution"))
+
+}
 
 function pptask(data,element)
 {
@@ -800,13 +817,13 @@ function pptask(data,element)
     $("#select-vars-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-vars-regex").val(),true)});
     $("#pretty-select-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),true)});
     $("#pretty-deselect-regex-vars-button").click(function () { setRegexVars(tf,$("#select-vars-regex").val(),false)});
-    $("#pretty-refresh-problem-button").click(function () { renderProblem(tf,div); });
+    $("#pretty-refresh-problem-button").click(function () { rerender(tf); });
 
     $("#pretty-select-all-cons-button").click(function () { setAllCons(tf,true)});
     $("#pretty-deselect-all-cons-button").click(function () { setAllCons(tf,false)});
     $("#select-cons-regex").keyup(function (e) { if (e.originalEvent.keyCode == 13) setRegexVars(tf,$("#select-cons-regex").val(),true)});
     $("#pretty-select-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),true)});
     $("#pretty-deselect-regex-cons-button").click(function () { setRegexCons(tf,$("#select-cons-regex").val(),false)});
-    $("#pretty-refresh-problem-button").click(function () { renderProblem(tf,div); });
+    $("#pretty-refresh-problem-button").click(function () { rerender(tf); });
 
 }

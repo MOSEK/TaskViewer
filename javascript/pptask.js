@@ -454,6 +454,8 @@ function renderProblem(tf,element)
 
 function renderVarSelectBox(tf,element,varsubset)
 {
+    element.innerHTML = "";
+
     var table = new Table();
     element.appendChild(table.node);
     var cellsperrow = 15;
@@ -506,6 +508,7 @@ function setRegexVars(tf,regex,v)
 
 function renderConSelectBox(tf,element,consubset)
 {
+    element.innerHTML = "";
     var table = new Table();
     element.appendChild(table.node);
     var cellsperrow = 15;

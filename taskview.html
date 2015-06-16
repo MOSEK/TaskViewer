@@ -107,29 +107,32 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
       </div>
       <div id="pretty-advanced-select" style="display:none; border : solid thin black; padding:  5px;">
         <h3>Variables</h3>
-        <div id="pretty-select-variables">
-          <div>
+        <div>
+          <div class="pretty-button-frame">
             <div class="pretty-button" id="pretty-select-all-vars-button">Select all</div>
             <div class="pretty-button" id="pretty-deselect-all-vars-button">Deselect all</div>
-            <div class="pretty-button-frame">
-              <input type="text" id="select-vars-regex" title="Enter a regular expression to match names">
-              <div class="pretty-button" id="pretty-select-regex-vars-button">Select</div>
-              <div class="pretty-button" id="pretty-deselect-regex-vars-button">Deselect</div>
-            </div>
+          </div>
+          <div class="pretty-button-frame">
+            <input type="text" id="select-vars-regex" title="Enter a regular expression to match names">
+            <div class="pretty-button" id="pretty-select-regex-vars-button">Select</div>
+            <div class="pretty-button" id="pretty-deselect-regex-vars-button">Deselect</div>
           </div>
         </div>
+        <div id="pretty-select-variables"> </div>
 
         <h3>Constraints</h3>
-        <div id="pretty-select-constraints">
-          <div>
+        <div>
+          <div class="pretty-button-frame">
             <div class="pretty-button" id="pretty-select-all-cons-button">Select all</div>
             <div class="pretty-button" id="pretty-deselect-all-cons-button">Deselect all</div>
-            <div class="pretty-button-frame">
-              <input type="text" id="select-cons-regex" title="Enter a regular expression to match names">
-              <div class="pretty-button" id="pretty-select-regex-cons-button">Select</div>
-              <div class="pretty-button" id="pretty-deselect-regex-cons-button">Deselect</div>
-            </div>
           </div>
+          <div class="pretty-button-frame">
+            <input type="text" id="select-cons-regex" title="Enter a regular expression to match names">
+            <div class="pretty-button" id="pretty-select-regex-cons-button">Select</div>
+            <div class="pretty-button" id="pretty-deselect-regex-cons-button">Deselect</div>
+          </div>
+        </div>
+        <div id="pretty-select-constraints">
         </div>
 
         <h3>Cones</h3>

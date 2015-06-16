@@ -211,7 +211,7 @@ function renderProblem(tf,element)
         {
             var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow+2,"style" : "vertical-align : top; width : 16px;" },"");
             var div = document.createElement('div');
-            div.setAttribute("style","transform : rotate(90deg); transform-origin : top left 0; height : 16px; width : 16px;");
+            div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
             div.innerHTML = "... " + (colsubset[i] - prev) + " hidden columns";
             td.node.appendChild(div)
         }
@@ -246,7 +246,7 @@ function renderProblem(tf,element)
     {
         while (i < colsubset.length && colsubset[i] < tf.numvar)
         {
-            cols[colsubset[i]].node.innerHTML = fmtlinelm(tf.c[colsubset[i]],tf.varnames[colsubset[i]]);
+            cols[i].node.innerHTML = fmtlinelm(tf.c[colsubset[i]],tf.varnames[colsubset[i]]);
             ++i;
         }
     }
@@ -264,11 +264,11 @@ function renderProblem(tf,element)
                 var pb  = tf.barcalpha.ptrb[k];
                 var pe  = tf.barcalpha.ptrb[k+1];
 
-                cols[sub+tf.numvar].innerHTML = fmtbarelm(tf.barcalpha.valij,
-                                                          tf.barcalpha.subj,
-                                                          pb,pe,
-                                                          tf.barvarnames[sub],
-                                                          tf.barvardim[sub]);
+                cols[i].innerHTML = fmtbarelm(tf.barcalpha.valij,
+                                              tf.barcalpha.subj,
+                                              pb,pe,
+                                              tf.barvarnames[sub],
+                                              tf.barvardim[sub]);
                 ++i; ++k;
             }
         }
@@ -662,4 +662,3 @@ function pptask(data,element)
     $("#pretty-refresh-problem-button").click(function () { console.log("refresh"); renderProblem(tf,div); });
 
 }
-

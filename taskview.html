@@ -31,7 +31,7 @@
       #problem-table tr:nth-child(2n+1):hover { background-color : #a0a0c0; }
       #problem-table tr:nth-child(2n):hover   { background-color : #b0b0d0; }
 
-      #problem-table tr td { text-align : right; }
+      #problem-table { text-align : right; }
       #problem-table tr td:nth-child(1) { text-align : left; }
       #problem-table tr.cone-row td { text-align : left; }
       #problem-table tr.var-bound-row { background-color : #d0d0d0; }
@@ -59,8 +59,8 @@
       .solution-table tr:nth-child(2n+1):hover { background-color : #a0a0c0; }
       .solution-table tr:nth-child(2n):hover   { background-color : #b0b0d0; }
 
-      tr.header td      { font-weight : bold; font-size : larger; background-color : #808080; color : #f0f0f0; }
-      tr.header td      { text-align : center; padding : 2px 10px 2px 10px; }
+      tr.header td      { font-weight : bold; background-color : #808080; color : #f0f0f0; text-align : center; }
+      tr.header td      { padding : 2px 10px 2px 10px; }
       .solution-table { border-collapse : collapse; cell-spacing : 0; cell-padding : 3px; border : solid thin black; }
       .solution-table td { border-collapse : collapse; cell-spacing : 0; cell-padding : 3px }
       .sol-row td:nth-child(1) { border : solid black; border-width : 0 medium 0 0; }
@@ -150,8 +150,10 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
         <div id="pretty-select-constraints">
         </div>
 
-        <h3>Cones</h3>
+        <!--
+        <h3>Quadratic cones</h3>
         <div id="pretty-select-cones"></div>
+        -->
 
         <div class="pretty-button" id="pretty-refresh-problem-button">Refresh problem</div>
       </div>

@@ -343,22 +343,40 @@ function renderProblem(tf,element)
     for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) { rowsubset[idx] = i; ++idx; } }
     // --------------------
 
-    var probtablenumcol = 3+colsubset.length;
-    var probtablenumrow = 6+rowsubset.length+tf.numcone;
-
-    var table = new Table({ "id" : "problem-table" },true,true);
+    
+    var table = new Table({ "id" : "problem-table" });
     element.appendChild(table.node);
 
-    table.addhead(); table.addhead();
+    // ---------------- HEAD
+    var tr = table.addrow({"class" : "header" });
+    tr.addcells(2);
+    var numskipcol = 0;
     var prev = -1;
     for (var i = 0; i < colsubset.length;    ++i)
     {
-        if (colsubset[i] > prev+1) table.addhead({"class" : "skip-marker" },"");
-        table.addhead({"id" : "var-"+colsubset[i]}, colsubset[i] < tf.numvar ? tf.varnames[colsubset[i]] : tf.barvarnames[colsubset[i]-tf.numvar] );
+        if (colsubset[i] > prev+1) { tr.addcell(); ++numskipcol; }
+        tr.addcell({"id" : "var-"+colsubset[i]}, colsubset[i] < tf.numvar ? tf.varnames[colsubset[i]] : tf.barvarnames[colsubset[i]-tf.numvar] );
         prev = colsubset[i];
     }
-    if (prev < tf.numvar+tf.numcon-1) table.addhead();
-    table.addhead();
+    if (prev < tf.numvar+tf.numbarvar-1) { tr.addcell(); ++numskipcol; }
+    tr.addcell();
+    // ---------------- HEAD
+
+    // count number of skipped row blocks
+    var numskiprow = 0;
+    var prev = -1;
+    for (var i = 0; i < rowsubset.length; ++i)
+        if (prev + 1 < rowsubset[i]) ++ numskiprow; else prev = rowsubset[i]; 
+    if (prev +1< tf.numcon) ++numskiprow;
+
+
+    var probtablenumcol = 4+colsubset.length+numskipcol;
+    var probtablenumrow = 6+rowsubset.length+numskiprow;
+
+
+    console.log("table dim: ",probtablenumcol,probtablenumrow,"skip:",numskipcol,numskiprow);
+
+
 
     table.addrow({ "style" : "display : none;"});
 
@@ -368,23 +386,22 @@ function renderProblem(tf,element)
     {
         if (colsubset[i] > prev+1)
         {
-            var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow+2,"style" : "vertical-align : top; width : 16px;" },"");
+            var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
             var div = document.createElement('div');
             div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
-            div.innerHTML = "... " + (colsubset[i] - prev) + " hidden columns";
+            div.innerHTML = "... " + (colsubset[i] - prev - 1) + " hidden columns";
             td.node.appendChild(div)
         }
         tr.addcell();
         prev = colsubset[i];
     }
-    if (prev < tf.numvar+tf.numcon-1)
+    if (prev < tf.numvar+tf.numbarvar-1)
     {
-        var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow+2,"style" : "vertical-align : top; width : 16px;" },"");
+        var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
         var div = document.createElement('div');
         div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
         div.innerHTML = "... " + (tf.numvar+tf.numcon-1 - prev) + " hidden columns";
         td.node.appendChild(div)
-
     }
     table.addhead();
 
@@ -527,28 +544,9 @@ function renderProblem(tf,element)
     //-------------------------------------
 
 
-    // cones
-    for (var i = 0; i < tf.numcone; ++i)
-    {
-        var conesize = tf.qconesub.ptrb[i+1] - tf.qconesub.ptrb[i];
-        var conearr = new Array();
-        for (var j = tf.qconesub.ptrb[i]; j < tf.qconesub.ptrb[i+1]; ++j)
-            conearr[conearr.length] = varname(tf.varnames[tf.qconesub.subj[j]]);
-
-        var conedef = "("+conearr.join(",")+") &in; "+(tf.qconetype[i] == MSK_CT_QUAD ? "QCone" : "RotatedQCone")+"("+conesize+")";
-
-        var tr = table.addrow({"class" : "cone-row" });
-        tr.addcell({"class" : "cone-name" }, tf.conenames[i]);
-        tr.addcell();
-        tr.addcell({"colspan" : ""+(probtablenumcol-2)},conedef);
-    }
 
 
-    var tr = table.addrow({"class" : "sub-header"});
-    var td = document.createElement("th");
-    td.setAttribute("colspan", probtablenumcol);
-    td.innerHTML = "Variable domains";
-    tr.node.appendChild(td);
+    table.addrow({"class" : "header"}).addcell({"colspan" : probtablenumcol },"Variable domains");
 
     var vartypes = new Int8Array(tf.numvar);
     if (this.intvaridxs != null)
@@ -575,7 +573,7 @@ function renderProblem(tf,element)
     var ii = 0;
     for (; ii < colsubset.length && colsubset[ii] < tf.numvar ; ++ii)
     {
-        var u = colsubset[ii];
+        var i = colsubset[ii];
         if (vartypes[ii] > 0) tpcells[i].node.innerHTML = 'int';
 
         if      (tf.varbk[i] == MSK_BK_FX)
@@ -608,6 +606,25 @@ function renderProblem(tf,element)
         var i = colsubset[ii];
         tpcells[ii].node.innerHTML = "PSD("+tf.barvardim[i-tf.numvar]+")";
     }
+
+    table.addrow({"class" : "header"}).addcell({"colspan" : probtablenumcol },"Cones");
+
+    // cones
+    for (var i = 0; i < tf.numcone; ++i)
+    {
+        var conesize = tf.qconesub.ptrb[i+1] - tf.qconesub.ptrb[i];
+        var conearr = new Array();
+        for (var j = tf.qconesub.ptrb[i]; j < tf.qconesub.ptrb[i+1]; ++j)
+            conearr[conearr.length] = varname(tf.varnames[tf.qconesub.subj[j]]);
+
+        var conedef = "("+conearr.join(",")+") &in; "+(tf.qconetype[i] == MSK_CT_QUAD ? "QCone" : "RotatedQCone")+"("+conesize+")";
+
+        var tr = table.addrow({"class" : "cone-row" });
+        tr.addcell({"class" : "cone-name" }, tf.conenames[i]);
+        tr.addcell();
+        tr.addcell({"colspan" : ""+(probtablenumcol-2)},conedef);
+    }
+
 } /* renderProblem */
 
 function renderVarSelectBox(tf,element,varsubset)

@@ -257,6 +257,9 @@ function TaskFile(data)
     this.qconetype = null;
     this.qconesub  = null;
 
+    // 
+    this.matsto = null;
+
     // solutions
     this.solbas = null;
     this.solitr = null;
@@ -297,10 +300,7 @@ function TaskFile(data)
     {
         if      (this.tf.curentry_name == 'Task/data/A')
         {
-            console.log("A:")
             this.A = transpose(parsematrix(this.tf.curentry_data));
-            console.log("A transposed");
-            console.log(this.A);
         }
         else if (this.tf.curentry_name == 'Task/data/c')
         {
@@ -435,7 +435,52 @@ function TaskFile(data)
             }
             this.doubleparameters = keyval;
         }
-        //--------------------------------
+        //-- Matrix store ----------------
+        else if (this.tf.curentry_name.match('Task/data/MatrixStore') != null)
+        {
+            if (this.matsto == null)
+                this.matsto = new Array(this.numsymmat);
+
+            if (this.tf.curentry_name == 'Task/data/MatrixStore/nnz')
+            {
+                var nnz = parsematrix(this.tf.curentry_data).data;
+                this.tf.next_entry();
+                this.tf.next_entry();
+
+                var dim = parsematrix(this.tf.curentry_data).data;
+                this.tf.next_entry();
+
+                var sub = parsematrix(this.tf.curentry_data).data;
+                this.tf.next_entry();
+
+                var val = parsematrix(this.tf.curentry_data).data;
+
+                var pos = 0;
+                for (var i = 0; i < this.numsymmat; ++i)
+                {
+                    this.matsto[i] = { 'dim'  : dim[i],
+                                       'subi' : sub.slice(pos,pos+nnz[i]),
+                                       'subj' : sub.slice(pos+this.numsymmat,pos+nnz[i]+this.numsymmat),
+                                       'val'  : val.slice(pos,pos+nnz[i])
+                                     };
+
+                    pos += nnz[i];
+                }
+            }
+            else
+            {
+                var m = parsematrix(this.tf.curentry_data);
+                var p = this.tf.curentry_name.split('/');
+                var i = p[p.length-1];
+
+                this.matsto[i] = { 'dim'  : m.dimi,
+                                   'subi' : m.subi,
+                                   'subj' : m.subj,
+                                   'val'  : m.valij
+                                 };
+            }
+
+        }
         //-- Solutions -------------------
         else if (this.tf.curentry_name == 'Task/solution/basic/status')
             this.solbas = new Solution();

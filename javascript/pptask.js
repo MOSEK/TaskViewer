@@ -11,31 +11,46 @@ function barvarname(s,title)
         return '<span class="var-name">'+s+'</span>';
 }
 
-function fmtbarelm(alpha,midx,first,last,name,dim)
+function barsymmat(tf,midx,dim)
 {
-    if (last-first == 1)
+    return "<span class='bar-symmat' onmouseover='showSymmatAt(this,"+midx+");' onmouseout='hideSymmat("+midx+")'>M#"+midx+"</span>";
+}
+
+function fmtbarelm(tf,alpha,midx,first,last,name,dim)
+{
+    if (last-first > 0)
     {
         var cof = alpha[first];
         var title = "PSD("+dim+")";
-        if (cof > 0)
+
+        var elms = new Array(last-first);
+        for (var i = 0; i < last-first; ++i)
         {
-            if (cof > 1 || cof < 1)
-                return " + "+cof+" M#"+midx[first]+" "+barvarname(name,title);
-            else
-                return " + M#"+midx[first]+" "+barvarname(name,title);
+            var cof = alpha[first+i];
+            var title = "PSD("+dim+")";
+            if (cof > 0)
+            {
+                if (cof > 1 || cof < 1)
+                    elms[i] = " + "+cof+" "+barsymmat(tf,midx[first+i],dim);
+                else
+                    elms[i] = " + "+barsymmat(tf,midx[first],dim);
+            }
+            else if (cof < 0)
+            {
+                if (cof > -1 || cof < -1)
+                    elms[i] = " - "+(-cof)+" "+barsymmat(tf,midx[first],dim);
+                else
+                    elms[i] = " - "+barsymmat(tf,midx[first],dim);
+            }
         }
-        else if (cof < 0)
-        {
-            if (cof > -1 || cof < -1)
-                return " - "+(-cof)+" M#"+midx[first]+" "+barvarname(name,title);
-            else
-                return " - M#"+midx[first]+" "+barvarname(name,title);
-        }
+
+        if (elms.length == 1)
+            return elms.join("")+" "+barvarname(name,title);
         else
-            return "";
+            return "+ ("+elms.join("")+") "+barvarname(name,title);
     }
     else
-        return " <FAIL> ";
+        return "";
 }
 
 function fmtlinelm(cof,name)
@@ -207,8 +222,6 @@ function renderSolution(tf,elt)
     colsubset = getCurrentVarSelection(tf);
     rowsubset = getCurrentConSelection(tf);
 
-    console.log("sol bas",tf.solbas);
-
     var tr = table.addrow({"class" : "header"});
     tr.addcell({"class" : "medium-border-right-cell"})
     tr.addcell({"colspan" : "4", "class" : "medium-border-right-cell"},"Basic")
@@ -374,46 +387,45 @@ function renderProblem(tf,element)
     var probtablenumrow = 6+rowsubset.length+numskiprow;
 
 
-    console.log("table dim: ",probtablenumcol,probtablenumrow,"skip:",numskipcol,numskiprow);
+    //----- Add row with markers for skipped columns
 
-
-
-    table.addrow({ "style" : "display : none;"});
-
-    var tr = table.addrow(); tr.addcells(2);
-    prev = -1;
-    for (var i = 0; i < colsubset.length;    ++i)
+    if (numskipcol > 0)
     {
-        if (colsubset[i] > prev+1)
+        table.addrow({ "style" : "display : none;"});
+
+        var tr = table.addrow(); tr.addcells(2);
+        prev = -1;
+        for (var i = 0; i < colsubset.length;    ++i)
+        {
+            if (colsubset[i] > prev+1)
+            {
+                var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
+                var div = document.createElement('div');
+                div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
+                div.innerHTML = "... " + (colsubset[i] - prev - 1) + " hidden columns";
+                td.node.appendChild(div)
+            }
+            tr.addcell();
+            prev = colsubset[i];
+        }
+        if (prev < tf.numvar+tf.numbarvar-1)
         {
             var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
             var div = document.createElement('div');
             div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
-            div.innerHTML = "... " + (colsubset[i] - prev - 1) + " hidden columns";
+            div.innerHTML = "... " + (tf.numvar+tf.numcon-1 - prev) + " hidden columns";
             td.node.appendChild(div)
         }
-        tr.addcell();
-        prev = colsubset[i];
+        table.addhead();
     }
-    if (prev < tf.numvar+tf.numbarvar-1)
-    {
-        var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
-        var div = document.createElement('div');
-        div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
-        div.innerHTML = "... " + (tf.numvar+tf.numcon-1 - prev) + " hidden columns";
-        td.node.appendChild(div)
-    }
-    table.addhead();
 
-
+    //----- Objective row
 
     var tr = table.addrow();
     tr.addcell({"class" : "obj-sense"},(tf.objsense == "MIN" ? "Minimize" : "Maximize"))
     tr.addcell();
     var cols = tr.addcells(colsubset.length);
     tr.addcell();
-
-
 
     var i = 0;
     if (tf.c == null)
@@ -440,7 +452,8 @@ function renderProblem(tf,element)
                 var pb  = tf.barcalpha.ptrb[k];
                 var pe  = tf.barcalpha.ptrb[k+1];
 
-                cols[i].innerHTML = fmtbarelm(tf.barcalpha.valij,
+                cols[i].innerHTML = fmtbarelm(tf,
+                                              tf.barcalpha.valij,
                                               tf.barcalpha.subj,
                                               pb,pe,
                                               tf.barvarnames[sub],
@@ -449,6 +462,9 @@ function renderProblem(tf,element)
             }
         }
     }
+
+
+    //----- Constraint rows
 
     if (tf.barasparsity != null)
     {
@@ -474,7 +490,7 @@ function renderProblem(tf,element)
 
 
         var  tr = table.addrow();
-        tr.addcell({},"<span  class=\"con-name\">"+tf.connames[i]+"</span>");
+        tr.addcell(undefined,"<span  class=\"con-name\">"+tf.connames[i]+"</span>");
 
         var bk = tf.conbk[i];
         if (bk == MSK_BK_LO ||
@@ -483,7 +499,7 @@ function renderProblem(tf,element)
         else
             tr.addcell({"class" : "con-lb"});
 
-        var cols = tr.addcells(probtablenumcol-3);
+        var cols = tr.addcells(colsubset.length);
 
         var l = 0;
         if (tf.A != null)
@@ -514,7 +530,8 @@ function renderProblem(tf,element)
                     var pb  = tf.baraalpha.ptrb[k];
                     var pe  = tf.baraalpha.ptrb[k+1];
 
-                    cols[l].node.innerHTML = fmtbarelm(tf.baraalpha.valij,
+                    cols[l].node.innerHTML = fmtbarelm(tf,
+                                                       tf.baraalpha.valij,
                                                        tf.baraalpha.subj,
                                                        pb,pe,
                                                        tf.barvarnames[sub],
@@ -566,7 +583,7 @@ function renderProblem(tf,element)
     tr.addcell()
 
     var tr = table.addrow({"class":"var-bound-row"});
-    tr.addcell(); tr.addcell();
+    tr.addcell(undefined,"&nbsp;"); tr.addcell();
     var tpcells = tr.addcells(colsubset.length);
     tr.addcell()
 
@@ -626,6 +643,21 @@ function renderProblem(tf,element)
     }
 
 } /* renderProblem */
+
+function showSymmatAt(elm,midx)
+{
+    var e = $("#symmat-"+midx);
+    var elmpos = $(elm).offset();
+    elmpos.top -= 20;
+    elmpos.left += 20;
+    e.toggle();
+    e.offset(elmpos);
+}
+
+function hideSymmat(midx)
+{
+    $("#symmat-"+midx).toggle(false);
+}
 
 function renderVarSelectBox(tf,element,varsubset)
 {
@@ -827,6 +859,76 @@ function pptask(data,element)
 
     renderProblem(tf,div);
     renderSolution(tf,document.getElementById("pretty-solution"))
+
+
+    // symmetric matrix dummies...
+    var element = document.getElementById("symmat-store");
+    element.innerHTML = "";
+    
+    for (var i = 0; i < tf.numsymmat; ++i)
+    {
+        var span = document.createElement("span");
+        span.setAttribute('class','display-symmat-box');
+        span.setAttribute('id','symmat-'+i);
+        element.appendChild(span);
+
+        var div = document.createElement("div");
+        div.setAttribute('class','display-symmat')
+        span.appendChild(div);
+
+        var N = tf.matsto[i].dim;
+        var table = new Table({'class':'symmat-display-table'});
+        div.appendChild(table.node);
+
+
+        if (N < 10) // full display
+        {
+            var rows = new Array(N);
+            for (var k = 0; k < N; ++k)
+            {
+                rows[k] = table.addrow().addcells(N);
+                for (var l = 0; l < N; ++l) rows[k][l].node.innerHTML = '&nbsp;';
+            }
+
+            for (var k = 0; k < tf.matsto[i].val.length; ++k)
+            {
+                var subi = tf.matsto[i].subi[k];
+                var subj = tf.matsto[i].subj[k];
+                rows[subi][subj].node.innerHTML = tf.matsto[i].val[k];
+                if (subi != subj)
+                    rows[subj][subi][tf.matsto[i].subj[k]].node.innerHTML = tf.matsto[i].val[k];
+            }
+        }
+        else // partial display
+        {
+            var M = 9;
+            var rows = new Array(M+1);
+            for (var k = 0; k < M+1; ++k)
+            {
+                rows[k] = table.addrow().addcells(M+1);
+                for (var l = 0; l < N; ++l) rows[k][l].node.innerHTML = '&nbsp;';
+            }
+            rows[0][M-1].node.innerHTML = '&hellip;'
+            rows[M-1][0].node.innerHTML = '&vellip;'
+            rows[M-1][M-1].node.innerHTML = '&#8945;'
+
+            for (var k = 0; k < tf.matsto[i].val.length; ++k)
+            {
+                var subi = tf.matsto[i].subi[k];
+                var subj = tf.matsto[i].subj[k];
+                if (subi < M && subj < M)
+                {
+                    rows[subi][subj].node.innerHTML = tf.matsto[i].val[k].toPrecision(3);
+                    if (subi != subj)
+                        rows[subj][subi].node.innerHTML = tf.matsto[i].val[k];
+                }
+            }
+
+        }
+
+    }
+
+
 
 
     $("#pretty-select-all-vars-button").click(function () { setAllVars(tf,true)});

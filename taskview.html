@@ -20,6 +20,10 @@
       .var-name { color : blue; }
       .con-name { color : #808080; }
       .cone-name { color : #808080; }
+      .bar-symmat { font-weight : bold; cursor : pointer; }
+      .symmat-store { z-index : 3; }
+      .display-symmat-box { display : none; height : 0px; width : 0px; overflow : visible; }
+      .display-symmat     { background-color : #ffffff; border : solid thin black; display : inline-block; padding : 5px;}
 
 
       #info-table { border : solid thin black; }
@@ -44,7 +48,7 @@
       #variables-table td { margin : 0px; padding : 0 3px 0 3px; }
 
       .pretty-tab:hover { background : #c0c0ff; }
-      .pretty-tab       { border : solid thin black; padding : 5px; }
+      .pretty-tab       { border : solid thin black; padding : 5px; cursor : pointer }
 
       #pretty-misc-table   { border-spacing : 0px; border-collapse : collapse; width : 100%; }
       #pretty-misc-content { border : solid thin-black; }
@@ -69,7 +73,17 @@
       .medium-border-right-cell { border : solid black; border-width : 0 medium 0 0; }
 
 
-      .pretty-button  { border-radius : 5px; border : solid thin black; background : #808080; color : #e0e0e0; padding : 3px; display : inline-block; }
+      .symmat-display-table td { background-color : #e0e0e0; min-width : 1em; min-height : 1em; }
+
+      .pretty-button  {
+                              border-radius : 5px;
+                              border        : solid thin black;
+                              background    : #808080;
+                              color         : #e0e0e0;
+                              padding       : 3px;
+                              display       : inline-block;
+                              cursor        : pointer;
+                      }
       .pretty-button-frame { border-radius : 5px; border : solid thin black; padding : 3px; display : inline-block; }
 
       body { margin : 10px; font-family : sans; }
@@ -179,5 +193,7 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
         <tr><td height="100%"></td></tr>
       </table>
     </div>
+
+    <div id="symmat-store"> </div>
   </body>
 </html>

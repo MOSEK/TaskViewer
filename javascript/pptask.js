@@ -896,7 +896,7 @@ function pptask(data,element)
                 var subj = tf.matsto[i].subj[k];
                 rows[subi][subj].node.innerHTML = tf.matsto[i].val[k];
                 if (subi != subj)
-                    rows[subj][subi][tf.matsto[i].subj[k]].node.innerHTML = tf.matsto[i].val[k];
+                    rows[subj][subi].node.innerHTML = tf.matsto[i].val[k];
             }
         }
         else // partial display

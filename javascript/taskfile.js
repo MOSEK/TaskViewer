@@ -451,6 +451,7 @@ function TaskFile(data)
                 this.tf.next_entry();
 
                 var sub = parsematrix(this.tf.curentry_data).data;
+                console.log(sub);
                 this.tf.next_entry();
 
                 var val = parsematrix(this.tf.curentry_data).data;
@@ -459,9 +460,9 @@ function TaskFile(data)
                 for (var i = 0; i < this.numsymmat; ++i)
                 {
                     this.matsto[i] = { 'dim'  : dim[i],
-                                       'subi' : sub.slice(pos,pos+nnz[i]),
-                                       'subj' : sub.slice(pos+this.numsymmat,pos+nnz[i]+this.numsymmat),
-                                       'val'  : val.slice(pos,pos+nnz[i])
+                                       'subi' : sub.subarray(pos,pos+nnz[i]),
+                                       'subj' : sub.subarray(pos+this.numsymmat,pos+nnz[i]+this.numsymmat),
+                                       'val'  : val.subarray(pos,pos+nnz[i])
                                      };
 
                     pos += nnz[i];

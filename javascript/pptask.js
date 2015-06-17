@@ -839,7 +839,6 @@ function pptask(data,element)
         div.innerHTML = "";
 
         var table = new Table({ "class" : "parameter-table" });
-        div.setAttribute("class","hidden");
         div.appendChild(table.node);
 
         for (var i in tf.stringparameters)

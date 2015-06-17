@@ -26,7 +26,7 @@
       .display-symmat     { background-color : #ffffff; border : solid thin black; display : inline-block; padding : 5px;}
 
 
-      #info-table { border : solid thin black; }
+      #info-table { border : solid thin black; padding : 5px; border-spacing : 5px; }
 
       #problem-table { cell-spacing : 0px; border-collapse : collapse; empty-cells : show;  }
       #problem-table td {  padding : 0 3px 0 3px; margin : 0px; }
@@ -50,14 +50,18 @@
       .pretty-tab:hover { background : #c0c0ff; }
       .pretty-tab       { border : solid thin black; padding : 5px; cursor : pointer }
 
-      #pretty-misc-table   { border-spacing : 0px; border-collapse : collapse; width : 100%; }
-      #pretty-misc-content { border : solid thin-black; }
+      #pretty-misc-table   { border-spacing : 0px; border-collapse : collapse; }
+      #pretty-misc-content { border : solid thin black; }
       #pretty-iparam-table { display : none; }
       #pretty-dparam-table { display : none; }
       #pretty-sparam-table { display : none; }
       #pretty-sol-bas      { display : none; }
       #pretty-sol-itr      { display : none; }
       #pretty-sol-itg      { display : none; }
+      .parameter-table         { border-collapse : collapse; border-spacing : 0px; }
+      .parameter-table tr:nth-child(2n+1) { background-color : #f0f0f0; }
+      .parameter-table tr:hover { background-color : #404040; color : #ffffff; }
+      .parameter-table td:nth-child(1)      { padding-left : 5px; padding-right : 20px; }
 
       .solution-table tr:nth-child(2n+1) { background-color : #e0e0ff; }
       .solution-table tr:nth-child(2n+1):hover { background-color : #a0a0c0; }
@@ -113,9 +117,7 @@ function prettySelect(which)
   $('#pretty-iparam-table').toggle(false);
   $('#pretty-dparam-table').toggle(false);
   $('#pretty-sparam-table').toggle(false);
-  $('#pretty-sol-bas').toggle(false);
-  $('#pretty-sol-itr').toggle(false);
-  $('#pretty-sol-itg').toggle(false);
+  $('#pretty-solution').toggle(false);
 
   $('#pretty-'+which).toggle(true);
 }
@@ -180,7 +182,7 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
       <table id="pretty-misc-table">
         <col width="200">
         <tr><td class="pretty-tab" onclick="prettySelect('iparam-table')">Integer Parameters</td>
-          <td rowspan="10" id="pretty-misc-content">
+          <td rowspan="5" id="pretty-misc-content">
             <div id="pretty-iparam-table"> </div>
             <div id="pretty-dparam-table"> </div>
             <div id="pretty-sparam-table"> </div>

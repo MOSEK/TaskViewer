@@ -6,7 +6,11 @@ Javascript pretty-formatter for Mosek `.task` files.
 
 Simply point you browser to `taskview.html` and load a `.task` file.
 
-*DISCLAIMER:* Do not attempt to load large files. Visually, only files up to
-about 100 variables and 200 constraints make sense.
+How it works
+------------
 
+Everything in the viewer runs completely in the browser, and no parts of the
+Task file handled externally. This means that you can actually just save the
+`.html` file and use it locally.
 
+It *also* means that if you load a large Task file you will probably kill your browser.

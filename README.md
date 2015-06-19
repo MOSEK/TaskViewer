@@ -5,12 +5,13 @@ Javascript pretty-formatter for Mosek `.task` files.
 
 Simply point you browser to `taskview.html` and load a `.task` file.
 
+Tested with Firefox and Google Chrome.
+
 How it works
 ------------
 
 Everything in the viewer runs completely in the browser, and no parts of the
-Task file handled externally. This means that you can actually just save the
-`.html` file and use it locally.
+Task file handled externally. This means that you can actually just clone the project and open `taskview.html` in a browser.
 
 It *also* means that if you load a large Task file you will probably kill your browser.
 

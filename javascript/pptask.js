@@ -470,11 +470,44 @@ function renderProblem(tf,element)
 
     if (tf.barasparsity != null)
     {
+        // sort sparsity by row, then column.
+
+        // first order by columns only
+        var baraptrb = new Int32Array(tf.numbarvar+1);
+        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+            ++baraptrb[tf.barasparsity.subj[i]+1];
+        for (var i = 0; i < tf.numbarvar; ++i)
+            baraptrb[i+1] += baraptrb[i];
+
+        var perm0  = new Int32Array(tf.barasparsity.nnz);
+        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+        {
+            var jj = tf.barasparsity.subj[i]
+            perm0[baraptrb[jj]] = i;
+            ++baraptrb[jj];
+        }
+
+        // then order by rows
+
         var baraptrb = new Int32Array(tf.numcon+1);
         for (var i = 0; i < tf.barasparsity.nnz; ++i)
             ++baraptrb[tf.barasparsity.subi[i]+1];
-        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+        for (var i = 0; i < tf.numcon; ++i)
             baraptrb[i+1] += baraptrb[i];
+
+        var perm = new Int32Array(tf.barasparsity.nnz);
+
+        for (var i = 0; i < tf.barasparsity.nnz; ++i)
+        {
+            var ii = tf.barasparsity.subi[perm0[i]];
+            perm[baraptrb[ii]] = perm0[i];
+            ++baraptrb[ii];
+        }
+        var barperm = perm;
+
+        for (var i = tf.numcon; i > 0; --i)
+            baraptrb[i] = baraptrb[i-1];
+        baraptrb[0] = 0;
    }
 
     var prev = -1;
@@ -519,25 +552,27 @@ function renderProblem(tf,element)
             }
         }
 
+
         if (tf.barasparsity != null)
         {
             var k = baraptrb[i];
             while (k < baraptrb[i+1] && l < colsubset.length)
             {
-                if      (tf.barasparsity.subj[k] < colsubset[l]-tf.numvar) ++k;
-                else if (tf.barasparsity.subj[k] > colsubset[l]-tf.numvar) ++l;
+                var subj = tf.barasparsity.subj[barperm[k]];
+
+                if      (subj < colsubset[l]-tf.numvar) ++k;
+                else if (subj > colsubset[l]-tf.numvar) ++l;
                 else
                 {
-                    var sub = tf.barasparsity.subj[k];
-                    var pb  = tf.baraalpha.ptrb[k];
-                    var pe  = tf.baraalpha.ptrb[k+1];
+                    var pb  = tf.baraalpha.ptrb[barperm[k]];
+                    var pe  = tf.baraalpha.ptrb[barperm[k]+1];
 
                     cols[l].node.innerHTML = fmtbarelm(tf,
                                                        tf.baraalpha.valij,
                                                        tf.baraalpha.subj,
                                                        pb,pe,
-                                                       tf.barvarnames[sub],
-                                                       tf.barvardim[sub]);
+                                                       tf.barvarnames[subj],
+                                                       tf.barvardim[subj]);
                     ++l; ++k;
                 }
             }
@@ -553,7 +588,7 @@ function renderProblem(tf,element)
             tr.addcell({"class" : "con-ub"});
         prev = i;
     }
- 
+
     //------- skipped rows, insert a marker
     if (prev < tf.numcon-1) // skipped rows, insert a marker
     {

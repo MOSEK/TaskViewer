@@ -118,6 +118,7 @@ function prettySelect(which)
   $('#pretty-dparam-table').toggle(false);
   $('#pretty-sparam-table').toggle(false);
   $('#pretty-solution').toggle(false);
+  $('#pretty-statistics').toggle(false);
 
   $('#pretty-'+which).toggle(true);
 }
@@ -187,11 +188,13 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
             <div id="pretty-dparam-table"> </div>
             <div id="pretty-sparam-table"> </div>
             <div id="pretty-solution"> </div>
+            <div id="pretty-statistics"> </div>
           </td>
         </tr>
         <tr><td class="pretty-tab" onclick="prettySelect('dparam-table')">Double parameters</td></tr>
         <tr><td class="pretty-tab" onclick="prettySelect('sparam-table')">String parameters</td></tr>
         <tr><td class="pretty-tab" onclick="prettySelect('solution')">Solutions</td></tr>
+        <tr><td class="pretty-tab" onclick="prettySelect('statistics')">Statistics</td></tr>
         <tr><td height="100%"></td></tr>
       </table>
     </div>

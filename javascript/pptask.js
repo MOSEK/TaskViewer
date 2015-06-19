@@ -43,9 +43,8 @@ function fmtbarelm(tf,alpha,midx,first,last,name,dim)
                     elms[i] = " - "+barsymmat(tf,midx[first],dim);
             }
         }
-
         if (elms.length == 1)
-            return elms.join("")+" "+barvarname(name,title);
+            return elms[0]+" "+barvarname(name,title);
         else
             return "+ ("+elms.join("")+") "+barvarname(name,title);
     }
@@ -268,7 +267,10 @@ function renderSolution(tf,elt)
             tr.addcell(undefined,tf.solitr.xx[ii]);
             tr.addcell(undefined,tf.solitr.slx[ii]);
             tr.addcell(undefined,tf.solitr.sux[ii]);
-            tr.addcell(undefined,tf.solitr.snx[ii]);
+            if (tf.solitr.snx != null)
+                tr.addcell(undefined,tf.solitr.snx[ii]);
+            else
+                tr.addcell();
         }
         else
             tr.addcells(5);
@@ -452,12 +454,12 @@ function renderProblem(tf,element)
                 var pb  = tf.barcalpha.ptrb[k];
                 var pe  = tf.barcalpha.ptrb[k+1];
 
-                cols[i].innerHTML = fmtbarelm(tf,
-                                              tf.barcalpha.valij,
-                                              tf.barcalpha.subj,
-                                              pb,pe,
-                                              tf.barvarnames[sub],
-                                              tf.barvardim[sub]);
+                cols[i].node.innerHTML = fmtbarelm(tf,
+                                                   tf.barcalpha.valij,
+                                                   tf.barcalpha.subj,
+                                                   pb,pe,
+                                                   tf.barvarnames[sub],
+                                                   tf.barvardim[sub]);
                 ++i; ++k;
             }
         }
@@ -854,10 +856,23 @@ function pptask(data,element)
     element.innerHTML = "";
     var div = document.createElement("div");
     div.setAttribute("id","div-problem-table");
-    element.appendChild(div);
-
+    element.appendChild(div);    
     renderProblem(tf,div);
+
+    // Solutions
     renderSolution(tf,document.getElementById("pretty-solution"))
+
+
+    // Statistics
+    var element = document.getElementById("pretty-statistics");
+    element.innerHTML = "";
+
+    var table = new Table({ 'class' : "pretty-statistics-table" });
+    element.appendChild(table.node);
+
+    
+
+
 
 
     // symmetric matrix dummies...
@@ -926,8 +941,6 @@ function pptask(data,element)
         }
 
     }
-
-
 
 
     $("#pretty-select-all-vars-button").click(function () { setAllVars(tf,true)});

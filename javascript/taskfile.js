@@ -30,9 +30,6 @@ function Int64Array(data,pos,num)
     var tmp = new Int32Array(data,pos,num*2);
     var res = new Int32Array(num);
     for (var i = 0; i < num; ++i) res[i] = tmp[i*2];
-    //console.log("-- Int64Array");
-    //console.log(tmp);
-    //console.log(res);
     return res;
 }
 
@@ -451,7 +448,6 @@ function TaskFile(data)
                 this.tf.next_entry();
 
                 var sub = parsematrix(this.tf.curentry_data).data;
-                console.log(sub);
                 this.tf.next_entry();
 
                 var val = parsematrix(this.tf.curentry_data).data;

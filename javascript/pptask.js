@@ -358,7 +358,6 @@ function renderProblem(tf,element)
     for (var i = 0; i < tf.numcon; ++i) { var e = document.getElementById("check-con-"+i); if (e && e.checked) { rowsubset[idx] = i; ++idx; } }
     // --------------------
 
-    
     var table = new Table({ "id" : "problem-table" });
     element.appendChild(table.node);
 
@@ -381,7 +380,7 @@ function renderProblem(tf,element)
     var numskiprow = 0;
     var prev = -1;
     for (var i = 0; i < rowsubset.length; ++i)
-        if (prev + 1 < rowsubset[i]) ++ numskiprow; else prev = rowsubset[i]; 
+        if (prev + 1 < rowsubset[i]) ++ numskiprow; else prev = rowsubset[i];
     if (prev +1< tf.numcon) ++numskiprow;
 
 
@@ -415,7 +414,7 @@ function renderProblem(tf,element)
             var td = tr.addcell({"class" : "skip-marker","rowspan" : probtablenumrow,"style" : "vertical-align : top; width : 16px;" },"");
             var div = document.createElement('div');
             div.setAttribute("style","transform : rotate(90deg); height : 16px; width : 16px;");
-            div.innerHTML = "... " + (tf.numvar+tf.numcon-1 - prev) + " hidden columns";
+            div.innerHTML = "... " + (tf.numvar+tf.numbarvar-1 - prev) + " hidden columns";
             td.node.appendChild(div)
         }
         table.addhead();
@@ -778,7 +777,7 @@ function renderConSelectBox(tf,element,consubset)
 
 function setAllCons(tf,v)
 {
-    for (var i = 0; i < tf.numvar+tf.numbarvar; ++i) document.getElementById("check-con-"+i).checked = v;
+    for (var i = 0; i < tf.numcon; ++i) document.getElementById("check-con-"+i).checked = v;
 }
 
 function setRegexCons(tf,regex,v)
@@ -955,7 +954,7 @@ function pptask(data,element)
             for (var k = 0; k < M+1; ++k)
             {
                 rows[k] = table.addrow().addcells(M+1);
-                for (var l = 0; l < N; ++l) rows[k][l].node.innerHTML = '&nbsp;';
+                for (var l = 0; l < M+1; ++l) rows[k][l].node.innerHTML = '&nbsp;';
             }
             rows[0][M-1].node.innerHTML = '&hellip;'
             rows[M-1][0].node.innerHTML = '&vellip;'

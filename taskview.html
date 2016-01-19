@@ -128,7 +128,7 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
   </head>
 
   <body>
-    <input type="file" name="Task File" id="file-input" accept=".task" autofocus/>
+    <input type="file" name="Task File" id="file-input" accept=".task" autofocus/> 
     <div id="pretty-task">
       <h1>Task information</h1>
       <div id="pretty-task-info"> </div>
@@ -183,7 +183,7 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
       <table id="pretty-misc-table">
         <col width="200">
         <tr><td class="pretty-tab" onclick="prettySelect('iparam-table')">Integer Parameters</td>
-          <td rowspan="5" id="pretty-misc-content">
+          <td rowspan="6" id="pretty-misc-content">
             <div id="pretty-iparam-table"> </div>
             <div id="pretty-dparam-table"> </div>
             <div id="pretty-sparam-table"> </div>
@@ -200,5 +200,12 @@ $(document).ready(function () { $('#file-input').change(readSingleFile); });
     </div>
 
     <div id="symmat-store"> </div>
+
+    <h1>About the Task Viewer</h1>
+      The TaskViewer can parse and view MOSEK .task files. It is work in progress and may not include all features.
+      </br>
+      When loading a <tt>.task</tt> file <bf>no information leaves your machine</bf>. Everything is handled locally in your browser without storing cookies, files or anything, locally or remotely.
+      <br>
+      The complete source code (HTML+Javascript) for the TaskViewer project can be found <a href="https://github.com/MOSEK/TaskViewer">here</a>.
   </body>
 </html>

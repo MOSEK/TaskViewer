@@ -33,14 +33,14 @@ function fmtbarelm(tf,alpha,midx,first,last,name,dim)
                 if (cof > 1 || cof < 1)
                     elms[i] = " + "+cof+" "+barsymmat(tf,midx[first+i],dim);
                 else
-                    elms[i] = " + "+barsymmat(tf,midx[first],dim);
+                    elms[i] = " + "+barsymmat(tf,midx[first+i],dim);
             }
             else if (cof < 0)
             {
                 if (cof > -1 || cof < -1)
-                    elms[i] = " - "+(-cof)+" "+barsymmat(tf,midx[first],dim);
+                    elms[i] = " - "+(-cof)+" "+barsymmat(tf,midx[first+i],dim);
                 else
-                    elms[i] = " - "+barsymmat(tf,midx[first],dim);
+                    elms[i] = " - "+barsymmat(tf,midx[first+i],dim);
             }
         }
         if (elms.length == 1)
